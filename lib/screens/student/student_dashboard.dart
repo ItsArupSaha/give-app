@@ -269,32 +269,35 @@ class _StudentDashboardState extends State<StudentDashboard> {
           ),
         ),
         const SizedBox(height: AppConstants.defaultPadding),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(AppConstants.largePadding),
-            child: Column(
-              children: [
-                Icon(
-                  Icons.history,
-                  size: 48,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(height: AppConstants.defaultPadding),
-                Text(
-                  'No Recent Activity',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: AppConstants.smallPadding),
-                Text(
-                  'Your recent activities will appear here',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+        SizedBox(
+          width: double.infinity,
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(AppConstants.largePadding),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.history,
+                    size: 64,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
+                  const SizedBox(height: AppConstants.defaultPadding),
+                  Text(
+                    'No Recent Activity',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: AppConstants.smallPadding),
+                  Text(
+                    'Your recent activities will appear here',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
             ),
           ),
         ),

@@ -103,7 +103,7 @@ class Helpers {
 
   // Validate password strength
   static bool isStrongPassword(String password) {
-    if (password.length < 8) return false;
+    if (password.length < 6) return false;
     if (!password.contains(RegExp(r'[A-Z]'))) return false;
     if (!password.contains(RegExp(r'[a-z]'))) return false;
     if (!password.contains(RegExp(r'[0-9]'))) return false;

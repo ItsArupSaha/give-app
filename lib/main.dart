@@ -70,11 +70,54 @@ class GauravanaiApp extends StatelessWidget {
                 contentPadding: const EdgeInsets.all(AppConstants.defaultPadding),
               ),
             ),
-            home: _getHomeScreen(userProvider),
+            home: _AppInitializer(userProvider: userProvider),
           );
         },
       ),
     );
+  }
+
+  Widget _getHomeScreen(UserProvider userProvider) {
+    if (userProvider.isLoading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (userProvider.isLoggedIn) {
+      if (userProvider.isTeacher) {
+        return const TeacherDashboard();
+      } else if (userProvider.isStudent) {
+        return const StudentDashboard();
+      }
+    }
+
+    return const LoginScreen();
+  }
+}
+
+class _AppInitializer extends StatefulWidget {
+  final UserProvider userProvider;
+
+  const _AppInitializer({required this.userProvider});
+
+  @override
+  State<_AppInitializer> createState() => _AppInitializerState();
+}
+
+class _AppInitializerState extends State<_AppInitializer> {
+  @override
+  void initState() {
+    super.initState();
+    // Initialize user authentication state when app starts
+    widget.userProvider.initializeUser();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _getHomeScreen(widget.userProvider);
   }
 
   Widget _getHomeScreen(UserProvider userProvider) {
