@@ -28,30 +28,30 @@ class AuthService {
       String errorMessage;
       switch (e.code) {
         case 'user-not-found':
-          errorMessage = 'No account found with this email address.';
+          errorMessage = 'Wrong credentials. Please try again with correct email and password.';
           break;
         case 'wrong-password':
-          errorMessage = 'Incorrect password. Please try again.';
+          errorMessage = 'Wrong credentials. Please try again with correct email and password.';
           break;
         case 'invalid-email':
-          errorMessage = 'Please enter a valid email address.';
+          errorMessage = 'Invalid email format.';
           break;
         case 'user-disabled':
-          errorMessage = 'This account has been disabled. Please contact support.';
+          errorMessage = 'Account disabled. Contact support.';
           break;
         case 'too-many-requests':
-          errorMessage = 'Too many failed attempts. Please try again later.';
+          errorMessage = 'Too many attempts. Try again later.';
           break;
         case 'invalid-credential':
-          errorMessage = 'Invalid email or password. Please check your credentials.';
+          errorMessage = 'Wrong credentials. Please try again with correct email and password.';
           break;
         case 'network-request-failed':
-          errorMessage = 'Network error. Please check your internet connection.';
+          errorMessage = 'Network error. Check connection.';
           break;
         default:
           errorMessage = 'Sign in failed. Please try again.';
       }
-      throw Exception(errorMessage);
+      throw errorMessage;
     } catch (e) {
       throw Exception('Sign in failed: ${e.toString()}');
     }
@@ -94,24 +94,24 @@ class AuthService {
       String errorMessage;
       switch (e.code) {
         case 'weak-password':
-          errorMessage = 'Password is too weak. Please choose a stronger password.';
+          errorMessage = 'Password too weak. Choose a stronger one.';
           break;
         case 'email-already-in-use':
-          errorMessage = 'An account already exists with this email address.';
+          errorMessage = 'Email already registered.';
           break;
         case 'invalid-email':
-          errorMessage = 'Please enter a valid email address.';
+          errorMessage = 'Invalid email format.';
           break;
         case 'operation-not-allowed':
-          errorMessage = 'Email/password accounts are not enabled. Please contact support.';
+          errorMessage = 'Registration disabled. Contact support.';
           break;
         case 'network-request-failed':
-          errorMessage = 'Network error. Please check your internet connection.';
+          errorMessage = 'Network error. Check connection.';
           break;
         default:
           errorMessage = 'Registration failed. Please try again.';
       }
-      throw Exception(errorMessage);
+      throw errorMessage;
     } catch (e) {
       throw Exception('Registration failed: ${e.toString()}');
     }
@@ -134,21 +134,21 @@ class AuthService {
       String errorMessage;
       switch (e.code) {
         case 'user-not-found':
-          errorMessage = 'No account found with this email address.';
+          errorMessage = 'Email not found.';
           break;
         case 'invalid-email':
-          errorMessage = 'Please enter a valid email address.';
+          errorMessage = 'Invalid email format.';
           break;
         case 'too-many-requests':
-          errorMessage = 'Too many requests. Please try again later.';
+          errorMessage = 'Too many requests. Try again later.';
           break;
         case 'network-request-failed':
-          errorMessage = 'Network error. Please check your internet connection.';
+          errorMessage = 'Network error. Check connection.';
           break;
         default:
           errorMessage = 'Password reset failed. Please try again.';
       }
-      throw Exception(errorMessage);
+      throw errorMessage;
     } catch (e) {
       throw Exception('Password reset failed: ${e.toString()}');
     }

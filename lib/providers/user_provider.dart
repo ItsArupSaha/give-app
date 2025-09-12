@@ -29,7 +29,7 @@ class UserProvider with ChangeNotifier {
       }
       _clearError();
     } catch (e) {
-      _setError('Failed to initialize user: ${e.toString()}');
+      _setError(e.toString());
     } finally {
       _setLoading(false);
     }
@@ -49,7 +49,7 @@ class UserProvider with ChangeNotifier {
         return false;
       }
     } catch (e) {
-      _setError('Sign in failed: ${e.toString()}');
+      _setError(e.toString());
       return false;
     } finally {
       _setLoading(false);
@@ -82,7 +82,7 @@ class UserProvider with ChangeNotifier {
         return false;
       }
     } catch (e) {
-      _setError('Registration failed: ${e.toString()}');
+      _setError(e.toString());
       return false;
     } finally {
       _setLoading(false);
@@ -98,7 +98,7 @@ class UserProvider with ChangeNotifier {
       _clearError();
       notifyListeners();
     } catch (e) {
-      _setError('Sign out failed: ${e.toString()}');
+      _setError(e.toString());
     } finally {
       _setLoading(false);
     }
@@ -112,7 +112,7 @@ class UserProvider with ChangeNotifier {
       _clearError();
       return true;
     } catch (e) {
-      _setError('Password reset failed: ${e.toString()}');
+      _setError(e.toString());
       return false;
     } finally {
       _setLoading(false);
@@ -174,7 +174,7 @@ class UserProvider with ChangeNotifier {
     try {
       return await _authService.getUserById(uid);
     } catch (e) {
-      _setError('Failed to get user: ${e.toString()}');
+      _setError(e.toString());
       return null;
     }
   }

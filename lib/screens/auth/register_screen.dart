@@ -195,13 +195,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   builder: (context, userProvider, child) {
                     return ElevatedButton(
                       onPressed: userProvider.isLoading ? null : _handleRegister,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2E7D32), // Deep Green matching brand
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppConstants.largePadding,
+                          vertical: AppConstants.defaultPadding,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+                        ),
+                        elevation: 2,
+                      ),
                       child: userProvider.isLoading
                           ? const SizedBox(
                               height: 20,
                               width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
                             )
-                          : const Text(AppStrings.register),
+                          : const Text(
+                              AppStrings.register,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                     );
                   },
                 ),
