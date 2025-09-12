@@ -87,6 +87,9 @@ class AuthService {
             .doc(result.user!.uid)
             .set(newUser.toFirestore());
         
+        // Sign out the user immediately after registration
+        await _auth.signOut();
+        
         return newUser;
       }
       return null;

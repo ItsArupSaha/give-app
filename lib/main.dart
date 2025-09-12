@@ -41,7 +41,7 @@ class GauravanaiApp extends StatelessWidget {
                 seedColor: const Color(AppColors.primaryColorValue),
                 brightness: Brightness.light,
               ),
-              textTheme: GoogleFonts.poppinsTextTheme(),
+              textTheme: GoogleFonts.notoSansTextTheme(), // Supports Devanagari
               appBarTheme: const AppBarTheme(
                 centerTitle: true,
                 elevation: 0,
@@ -111,8 +111,10 @@ class _AppInitializerState extends State<_AppInitializer> {
   @override
   void initState() {
     super.initState();
-    // Initialize user authentication state when app starts
-    widget.userProvider.initializeUser();
+    // Initialize user authentication state after the build phase
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.userProvider.initializeUser();
+    });
   }
 
   @override

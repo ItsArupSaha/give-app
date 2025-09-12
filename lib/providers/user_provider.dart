@@ -66,21 +66,17 @@ class UserProvider with ChangeNotifier {
   }) async {
     _setLoading(true);
     try {
-      _currentUser = await _authService.registerWithEmailAndPassword(
+      await _authService.registerWithEmailAndPassword(
         email: email,
         password: password,
         name: name,
         whatsappNumber: whatsappNumber,
         role: role,
       );
-      if (_currentUser != null) {
-        _clearError();
-        notifyListeners();
-        return true;
-      } else {
-        _setError('Registration failed');
-        return false;
-      }
+      // Don't set current user - user needs to sign in manually
+      _clearError();
+      notifyListeners();
+      return true;
     } catch (e) {
       _setError(e.toString());
       return false;

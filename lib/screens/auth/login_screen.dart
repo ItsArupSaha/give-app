@@ -70,23 +70,55 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 60),
+                const SizedBox(height: 40),
+                
+                // Spiritual Quote
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(AppConstants.defaultPadding),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                      width: 1,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      
+                      Text(
+                        '"Love of God is the highest perfection of life. This is our philosophy."',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontStyle: FontStyle.italic,
+                          color: Theme.of(context).colorScheme.onSurface,
+                          height: 1.4,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: AppConstants.smallPadding),
+                      Text(
+                        '- Evening Darsana, August 11, 1976, Tehran',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 40),
                 
                 // Login Form
                 Text(
-                  'Welcome Back',
+                  'Sign In',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: AppConstants.smallPadding),
-                Text(
-                  'Sign in to continue your spiritual journey',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: AppConstants.largePadding),
+                
                 
                 // Email Field
                 TextFormField(
