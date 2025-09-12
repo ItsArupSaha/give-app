@@ -1,6 +1,4 @@
-# Gauravanai Institute For Vedic Education
-
-A Flutter application for spiritual educational platform, similar to Google Classroom but designed specifically for Vedic education institutions.
+# Gaura-vāṇī Institute for Vaiṣṇava Education (GIVE)
 
 ## Features
 
@@ -79,7 +77,7 @@ flutter pub get
 
 #### Create Firebase Project
 1. Go to [Firebase Console](https://console.firebase.google.com/)
-2. Create a new project named "gauravanai-institute"
+2. Create a new project named "Gauravani-institute"
 3. Enable Authentication, Firestore Database, and Storage
 
 #### Configure Authentication

@@ -63,7 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: AppConstants.smallPadding),
                     Text(
-                      'Spiritual Educational Platform',
+                      'for Vaiṣṇava Education (GIVE)',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),

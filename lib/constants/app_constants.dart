@@ -1,6 +1,6 @@
 class AppConstants {
   // App Information
-  static const String appName = 'Gauravanai Institute';
+  static const String appName = 'Gaura-vāṇī Institute';
   static const String appVersion = '1.0.0';
   
   // Firebase Collections
@@ -52,7 +52,7 @@ class AppConstants {
   
   // Notification
   static const String notificationChannelId = 'gauravanai_notifications';
-  static const String notificationChannelName = 'Gauravanai Notifications';
+  static const String notificationChannelName = 'Gauravani Notifications';
   static const String notificationChannelDescription = 'Notifications for tasks, comments, and updates';
 }
 
