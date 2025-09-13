@@ -42,6 +42,7 @@ class UserProvider with ChangeNotifier {
       _currentUser = await _authService.signInWithEmailAndPassword(email, password);
       if (_currentUser != null) {
         _clearError();
+        // Ensure we notify listeners after setting the user
         notifyListeners();
         return true;
       } else {
@@ -53,6 +54,8 @@ class UserProvider with ChangeNotifier {
       return false;
     } finally {
       _setLoading(false);
+      // Notify listeners again after loading state changes
+      notifyListeners();
     }
   }
 

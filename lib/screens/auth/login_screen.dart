@@ -297,6 +297,9 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       
       if (success && mounted) {
+        // Clear any errors first
+        userProvider.clearError();
+        
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -309,10 +312,18 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 2),
           ),
         );
-        // Navigation will be handled by the main app based on user role
-        userProvider.clearError();
+        
+        // Force navigation back to the main app to trigger Consumer rebuild
+        // This ensures the main app's Consumer detects the state change
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (mounted) {
+            // Pop back to the main app which will trigger the Consumer to rebuild
+            Navigator.of(context).pop();
+          }
+        });
       }
     }
   }
