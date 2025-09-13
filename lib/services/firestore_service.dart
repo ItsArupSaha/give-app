@@ -45,11 +45,16 @@ class FirestoreService {
         .collection('courseGroups')
         .where('teacherId', isEqualTo: teacherId)
         .where('isActive', isEqualTo: true)
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => CourseGroup.fromFirestore(doc))
-            .toList());
+        .map((snapshot) {
+          // Sort in memory to avoid complex index requirement
+          // This approach is more efficient than creating complex Firestore indexes
+          final courseGroups = snapshot.docs
+              .map((doc) => CourseGroup.fromFirestore(doc))
+              .toList();
+          courseGroups.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return courseGroups;
+        });
   }
 
   Future<CourseGroup?> getCourseGroupById(String id) async {
@@ -122,11 +127,15 @@ class FirestoreService {
         .collection('batches')
         .where('courseGroupId', isEqualTo: courseGroupId)
         .where('isActive', isEqualTo: true)
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Batch.fromFirestore(doc))
-            .toList());
+        .map((snapshot) {
+          // Sort in memory to avoid complex index requirement
+          final batches = snapshot.docs
+              .map((doc) => Batch.fromFirestore(doc))
+              .toList();
+          batches.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return batches;
+        });
   }
 
   Future<Batch?> getBatchByClassCode(String classCode) async {
@@ -182,11 +191,15 @@ class FirestoreService {
     return _firestore
         .collection('tasks')
         .where('batchId', isEqualTo: batchId)
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Task.fromFirestore(doc))
-            .toList());
+        .map((snapshot) {
+          // Sort in memory to avoid complex index requirement
+          final tasks = snapshot.docs
+              .map((doc) => Task.fromFirestore(doc))
+              .toList();
+          tasks.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return tasks;
+        });
   }
 
   Future<Task?> getTaskById(String id) async {
@@ -249,11 +262,15 @@ class FirestoreService {
     return _firestore
         .collection('submissions')
         .where('taskId', isEqualTo: taskId)
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Submission.fromFirestore(doc))
-            .toList());
+        .map((snapshot) {
+          // Sort in memory to avoid complex index requirement
+          final submissions = snapshot.docs
+              .map((doc) => Submission.fromFirestore(doc))
+              .toList();
+          submissions.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return submissions;
+        });
   }
 
   // Enrollment Operations
@@ -294,11 +311,15 @@ class FirestoreService {
         .collection('enrollments')
         .where('studentId', isEqualTo: studentId)
         .where('status', isEqualTo: 'active')
-        .orderBy('enrolledAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Enrollment.fromFirestore(doc))
-            .toList());
+        .map((snapshot) {
+          // Sort in memory to avoid complex index requirement
+          final enrollments = snapshot.docs
+              .map((doc) => Enrollment.fromFirestore(doc))
+              .toList();
+          enrollments.sort((a, b) => b.enrolledAt.compareTo(a.enrolledAt));
+          return enrollments;
+        });
   }
 
   Stream<List<Enrollment>> getEnrollmentsByBatch(String batchId) {
@@ -306,11 +327,15 @@ class FirestoreService {
         .collection('enrollments')
         .where('batchId', isEqualTo: batchId)
         .where('status', isEqualTo: 'active')
-        .orderBy('enrolledAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Enrollment.fromFirestore(doc))
-            .toList());
+        .map((snapshot) {
+          // Sort in memory to avoid complex index requirement
+          final enrollments = snapshot.docs
+              .map((doc) => Enrollment.fromFirestore(doc))
+              .toList();
+          enrollments.sort((a, b) => b.enrolledAt.compareTo(a.enrolledAt));
+          return enrollments;
+        });
   }
 
   // Comment Operations
@@ -349,22 +374,30 @@ class FirestoreService {
         .collection('comments')
         .where('batchId', isEqualTo: batchId)
         .where('type', isEqualTo: 'public')
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Comment.fromFirestore(doc))
-            .toList());
+        .map((snapshot) {
+          // Sort in memory to avoid complex index requirement
+          final comments = snapshot.docs
+              .map((doc) => Comment.fromFirestore(doc))
+              .toList();
+          comments.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return comments;
+        });
   }
 
   Stream<List<Comment>> getCommentsByTask(String taskId) {
     return _firestore
         .collection('comments')
         .where('taskId', isEqualTo: taskId)
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Comment.fromFirestore(doc))
-            .toList());
+        .map((snapshot) {
+          // Sort in memory to avoid complex index requirement
+          final comments = snapshot.docs
+              .map((doc) => Comment.fromFirestore(doc))
+              .toList();
+          comments.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return comments;
+        });
   }
 
   // Get all students (users with role 'student')
@@ -384,14 +417,30 @@ class FirestoreService {
   // Get enrolled students count for a teacher
   Future<int> getEnrolledStudentsCountForTeacher(String teacherId) async {
     try {
-      QuerySnapshot snapshot = await _firestore
-          .collection('enrollments')
+      // First get all batches for this teacher
+      QuerySnapshot batchesSnapshot = await _firestore
+          .collection('batches')
           .where('teacherId', isEqualTo: teacherId)
+          .where('isActive', isEqualTo: true)
+          .get();
+      
+      if (batchesSnapshot.docs.isEmpty) {
+        return 0;
+      }
+      
+      // Get all batch IDs
+      List<String> batchIds = batchesSnapshot.docs.map((doc) => doc.id).toList();
+      
+      // Get enrollments for these batches
+      QuerySnapshot enrollmentsSnapshot = await _firestore
+          .collection('enrollments')
+          .where('batchId', whereIn: batchIds)
+          .where('status', isEqualTo: 'active')
           .get();
       
       // Get unique student IDs
       Set<String> uniqueStudentIds = {};
-      for (var doc in snapshot.docs) {
+      for (var doc in enrollmentsSnapshot.docs) {
         Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
         String studentId = data['studentId'];
         uniqueStudentIds.add(studentId);
@@ -409,6 +458,7 @@ class FirestoreService {
       QuerySnapshot snapshot = await _firestore
           .collection('batches')
           .where('teacherId', isEqualTo: teacherId)
+          .where('isActive', isEqualTo: true)
           .get();
       
       return snapshot.docs.length;

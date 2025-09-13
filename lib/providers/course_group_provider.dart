@@ -17,6 +17,13 @@ class CourseGroupProvider with ChangeNotifier {
   Future<void> loadCourseGroups(String teacherId) async {
     _setLoading(true);
     try {
+      // First, get the initial data
+      final courseGroups = await _firestoreService.getCourseGroups(teacherId).first;
+      _courseGroups = courseGroups;
+      _clearError();
+      notifyListeners();
+      
+      // Then listen for real-time updates
       _firestoreService.getCourseGroups(teacherId).listen((courseGroups) {
         _courseGroups = courseGroups;
         _clearError();
@@ -35,6 +42,7 @@ class CourseGroupProvider with ChangeNotifier {
     try {
       await _firestoreService.createCourseGroup(courseGroup);
       _clearError();
+      // The real-time listener will automatically update the list
       return true;
     } catch (e) {
       _setError('Failed to create course group: ${e.toString()}');

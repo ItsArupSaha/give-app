@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/course_group_provider.dart';
+import '../../providers/stats_provider.dart';
 import '../../models/course_group.dart';
 import '../../constants/app_constants.dart';
 import '../../utils/helpers.dart';
@@ -269,6 +270,10 @@ class _CreateCourseGroupScreenState extends State<CreateCourseGroupScreen> {
         final success = await courseGroupProvider.createCourseGroup(courseGroup);
 
         if (success && mounted) {
+          // Refresh stats in the dashboard
+          final statsProvider = Provider.of<StatsProvider>(context, listen: false);
+          await statsProvider.refreshStats(userProvider.currentUser!.id);
+          
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Course group "${courseGroup.name}" created successfully!'),

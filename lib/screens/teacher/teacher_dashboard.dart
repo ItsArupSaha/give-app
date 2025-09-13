@@ -6,6 +6,7 @@ import '../../providers/course_group_provider.dart';
 import '../../providers/stats_provider.dart';
 import 'course_groups_screen.dart';
 import 'create_course_group_screen.dart';
+import 'batch_management_screen.dart';
 
 class TeacherDashboard extends StatefulWidget {
   const TeacherDashboard({super.key});
@@ -27,8 +28,20 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     
     if (userProvider.currentUser != null) {
-      await courseGroupProvider.loadCourseGroups(userProvider.currentUser!.id);
-      await statsProvider.loadStatsForTeacher(userProvider.currentUser!.id);
+      // Load data in parallel for better performance
+      await Future.wait([
+        courseGroupProvider.loadCourseGroups(userProvider.currentUser!.id),
+        statsProvider.loadStatsForTeacher(userProvider.currentUser!.id),
+      ]);
+    }
+  }
+
+  Future<void> _refreshStats() async {
+    final statsProvider = Provider.of<StatsProvider>(context, listen: false);
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    
+    if (userProvider.currentUser != null) {
+      await statsProvider.refreshStats(userProvider.currentUser!.id);
     }
   }
 
@@ -64,10 +77,6 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
               
               // Quick Actions
               _buildQuickActions(),
-              const SizedBox(height: AppConstants.defaultPadding),
-              
-              // Recent Activity
-              _buildRecentActivity(),
               const SizedBox(height: AppConstants.defaultPadding),
               
               // Course Groups Overview
@@ -158,6 +167,42 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
   Widget _buildQuickStats() {
     return Consumer2<CourseGroupProvider, StatsProvider>(
       builder: (context, courseGroupProvider, statsProvider, child) {
+        // Show loading state if either provider is loading
+        if (courseGroupProvider.isLoading || statsProvider.isLoading) {
+          return Container(
+            height: 120,
+            child: const Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+        
+        // Show error state if there's an error
+        if (courseGroupProvider.error != null || statsProvider.error != null) {
+          return Container(
+            height: 120,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    color: Theme.of(context).colorScheme.error,
+                    size: 32,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Failed to load stats',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        
         return Row(
           children: [
             Expanded(
@@ -252,7 +297,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                 'Manage Batches',
                 'View all batches',
                 Icons.class_,
-                () => _navigateToCourseGroups(),
+                () => _navigateToBatchManagement(),
               ),
             ),
           ],
@@ -319,79 +364,6 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
     );
   }
 
-  Widget _buildRecentActivity() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Recent Activity',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: AppConstants.smallPadding),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(AppConstants.defaultPadding),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(AppConstants.borderRadius),
-            border: Border.all(
-              color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
-            ),
-          ),
-          child: Column(
-            children: [
-              _buildActivityItem(
-                'Welcome to Gauravanai Institute',
-                'Your teacher account is ready',
-                Icons.check_circle,
-                Colors.green,
-              ),
-              const Divider(),
-              _buildActivityItem(
-                'Create your first course group',
-                'Start organizing your spiritual education courses',
-                Icons.lightbulb,
-                Colors.orange,
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActivityItem(String title, String subtitle, IconData icon, Color color) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppConstants.smallPadding),
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(width: AppConstants.smallPadding),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  subtitle,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildCourseGroupsOverview() {
     return Consumer<CourseGroupProvider>(
@@ -531,6 +503,14 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => const CourseGroupsScreen(),
+      ),
+    );
+  }
+
+  void _navigateToBatchManagement() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const BatchManagementScreen(),
       ),
     );
   }

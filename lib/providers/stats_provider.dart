@@ -17,14 +17,17 @@ class StatsProvider with ChangeNotifier {
   // Load stats for a teacher
   Future<void> loadStatsForTeacher(String teacherId) async {
     _setLoading(true);
+    _clearError();
     try {
-      // Load enrolled students count
-      _enrolledStudentsCount = await _firestoreService.getEnrolledStudentsCountForTeacher(teacherId);
+      // Load enrolled students count and total batches count in parallel
+      final results = await Future.wait([
+        _firestoreService.getEnrolledStudentsCountForTeacher(teacherId),
+        _firestoreService.getBatchesCountForTeacher(teacherId),
+      ]);
       
-      // Load total batches count
-      _totalBatchesCount = await _firestoreService.getBatchesCountForTeacher(teacherId);
+      _enrolledStudentsCount = results[0];
+      _totalBatchesCount = results[1];
       
-      _clearError();
       notifyListeners();
     } catch (e) {
       _setError('Failed to load stats: ${e.toString()}');

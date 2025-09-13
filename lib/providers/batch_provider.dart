@@ -35,6 +35,7 @@ class BatchProvider with ChangeNotifier {
     try {
       await _firestoreService.createBatch(batch);
       _clearError();
+      // The real-time listener will automatically update the list
       return true;
     } catch (e) {
       _setError('Failed to create batch: ${e.toString()}');
