@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user.dart' as app_user;
+import '../config/teacher_config.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -15,13 +16,19 @@ class AuthService {
   // Sign in with email and password
   Future<app_user.User?> signInWithEmailAndPassword(String email, String password) async {
     try {
+      // Use Firebase Auth for all users (including teachers)
       UserCredential result = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
       
       if (result.user != null) {
-        return await _getUserFromFirestore(result.user!.uid);
+        // Check if this is a teacher email and handle accordingly
+        if (TeacherConfig.isTeacherEmail(email)) {
+          return await _handleTeacherUser(result.user!.uid, email);
+        } else {
+          return await _getUserFromFirestore(result.user!.uid);
+        }
       }
       return null;
     } on FirebaseAuthException catch (e) {
@@ -54,6 +61,45 @@ class AuthService {
       throw errorMessage;
     } catch (e) {
       throw Exception('Sign in failed: ${e.toString()}');
+    }
+  }
+
+  // Handle teacher user creation/retrieval
+  Future<app_user.User?> _handleTeacherUser(String uid, String email) async {
+    try {
+      // Check if teacher exists in Firestore
+      DocumentSnapshot doc = await _firestore.collection('users').doc(uid).get();
+      
+      if (doc.exists) {
+        // Teacher exists, return the user
+        return app_user.User.fromFirestore(doc);
+      } else {
+        // Teacher doesn't exist in Firestore, create teacher document
+        Map<String, String>? teacherProfile = TeacherConfig.getTeacherProfile(email);
+        
+        if (teacherProfile == null) {
+          throw 'Teacher profile not found for email: $email';
+        }
+        
+        app_user.User teacherUser = app_user.User(
+          id: uid, // Use Firebase Auth UID
+          email: email,
+          name: teacherProfile['name']!,
+          whatsappNumber: teacherProfile['whatsapp'],
+          role: app_user.UserRole.teacher,
+          createdAt: DateTime.now(),
+        );
+        
+        // Create teacher document in Firestore
+        await _firestore
+            .collection('users')
+            .doc(uid)
+            .set(teacherUser.toFirestore());
+        
+        return teacherUser;
+      }
+    } catch (e) {
+      throw Exception('Failed to handle teacher user: ${e.toString()}');
     }
   }
 

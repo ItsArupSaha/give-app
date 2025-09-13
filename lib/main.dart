@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'providers/user_provider.dart';
 import 'providers/course_group_provider.dart';
 import 'providers/batch_provider.dart';
+import 'providers/stats_provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/teacher/teacher_dashboard.dart';
 import 'screens/student/student_dashboard.dart';
@@ -25,11 +26,12 @@ class GauravanaiApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => UserProvider()),
-        ChangeNotifierProvider(create: (_) => CourseGroupProvider()),
-        ChangeNotifierProvider(create: (_) => BatchProvider()),
-      ],
+        providers: [
+          ChangeNotifierProvider(create: (_) => UserProvider()),
+          ChangeNotifierProvider(create: (_) => CourseGroupProvider()),
+          ChangeNotifierProvider(create: (_) => BatchProvider()),
+          ChangeNotifierProvider(create: (_) => StatsProvider()),
+        ],
       child: Consumer<UserProvider>(
         builder: (context, userProvider, child) {
           return MaterialApp(
@@ -119,7 +121,11 @@ class _AppInitializerState extends State<_AppInitializer> {
 
   @override
   Widget build(BuildContext context) {
-    return _getHomeScreen(widget.userProvider);
+    return Consumer<UserProvider>(
+      builder: (context, userProvider, child) {
+        return _getHomeScreen(userProvider);
+      },
+    );
   }
 
   Widget _getHomeScreen(UserProvider userProvider) {

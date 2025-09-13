@@ -366,4 +366,54 @@ class FirestoreService {
             .map((doc) => Comment.fromFirestore(doc))
             .toList());
   }
+
+  // Get all students (users with role 'student')
+  Stream<List<Map<String, dynamic>>> getAllStudents() {
+    return _firestore
+        .collection('users')
+        .where('role', isEqualTo: 'student')
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => {
+              'id': doc.id,
+              ...doc.data(),
+            })
+            .toList());
+  }
+
+  // Get enrolled students count for a teacher
+  Future<int> getEnrolledStudentsCountForTeacher(String teacherId) async {
+    try {
+      QuerySnapshot snapshot = await _firestore
+          .collection('enrollments')
+          .where('teacherId', isEqualTo: teacherId)
+          .get();
+      
+      // Get unique student IDs
+      Set<String> uniqueStudentIds = {};
+      for (var doc in snapshot.docs) {
+        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+        String studentId = data['studentId'];
+        uniqueStudentIds.add(studentId);
+      }
+      
+      return uniqueStudentIds.length;
+    } catch (e) {
+      throw Exception('Failed to get enrolled students count: ${e.toString()}');
+    }
+  }
+
+  // Get total batches count for a teacher
+  Future<int> getBatchesCountForTeacher(String teacherId) async {
+    try {
+      QuerySnapshot snapshot = await _firestore
+          .collection('batches')
+          .where('teacherId', isEqualTo: teacherId)
+          .get();
+      
+      return snapshot.docs.length;
+    } catch (e) {
+      throw Exception('Failed to get batches count: ${e.toString()}');
+    }
+  }
 }
