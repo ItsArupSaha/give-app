@@ -5,6 +5,7 @@ import '../../constants/app_constants.dart';
 import '../../utils/helpers.dart';
 import '../../services/firestore_service.dart';
 import '../../models/enrollment.dart';
+import '../../models/batch.dart';
 
 class StudentDashboard extends StatefulWidget {
   const StudentDashboard({super.key});
@@ -14,6 +15,36 @@ class StudentDashboard extends StatefulWidget {
 }
 
 class _StudentDashboardState extends State<StudentDashboard> {
+  List<Enrollment> _enrollments = [];
+  bool _isLoadingEnrollments = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadEnrollments();
+  }
+
+  Future<void> _loadEnrollments() async {
+    try {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      if (userProvider.currentUser != null) {
+        final firestoreService = FirestoreService();
+        final enrollments = await firestoreService.getEnrollmentsByStudent(userProvider.currentUser!.id).first;
+        
+        
+        setState(() {
+          _enrollments = enrollments;
+          _isLoadingEnrollments = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isLoadingEnrollments = false;
+      });
+      print('Error loading enrollments: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -55,18 +86,20 @@ class _StudentDashboardState extends State<StudentDashboard> {
           ),
         ],
       ),
-      body: Consumer<UserProvider>(
-        builder: (context, userProvider, child) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(AppConstants.defaultPadding),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Welcome Section
-                _buildWelcomeSection(userProvider.currentUser?.name ?? ''),
-                const SizedBox(height: AppConstants.largePadding),
-                
-                // Quick Actions
+      body: RefreshIndicator(
+        onRefresh: _loadEnrollments,
+        child: Consumer<UserProvider>(
+          builder: (context, userProvider, child) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(AppConstants.defaultPadding),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Welcome Section
+                  _buildWelcomeSection(userProvider.currentUser?.name ?? ''),
+                  const SizedBox(height: AppConstants.largePadding),
+                  
+                  // Quick Actions
                 _buildQuickActions(),
                 const SizedBox(height: AppConstants.largePadding),
                 
@@ -80,6 +113,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
             ),
           );
         },
+        ),
       ),
     );
   }
@@ -217,9 +251,198 @@ class _StudentDashboardState extends State<StudentDashboard> {
           ),
         ),
         const SizedBox(height: AppConstants.defaultPadding),
-        _buildEmptyBatchesState(),
+        if (_isLoadingEnrollments)
+          const Center(child: CircularProgressIndicator())
+        else if (_enrollments.isEmpty)
+          _buildEmptyBatchesState()
+        else
+          _buildEnrollmentsList(),
       ],
     );
+  }
+
+  Widget _buildEnrollmentsList() {
+    return Column(
+      children: _enrollments.map((enrollment) => _buildEnrollmentCard(enrollment)).toList(),
+    );
+  }
+
+  Widget _buildEnrollmentCard(Enrollment enrollment) {
+    return FutureBuilder<Batch?>(
+      future: _getBatchById(enrollment.batchId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Card(
+            child: Padding(
+              padding: EdgeInsets.all(AppConstants.defaultPadding),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          );
+        }
+
+        if (!snapshot.hasData) {
+          return const SizedBox.shrink();
+        }
+
+        final batch = snapshot.data!;
+        return Card(
+          margin: const EdgeInsets.only(bottom: AppConstants.defaultPadding),
+          child: Padding(
+            padding: const EdgeInsets.all(AppConstants.defaultPadding),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 20,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      child: Text(
+                        Helpers.getInitials(batch.name),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppConstants.defaultPadding),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            batch.name,
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'Class Code: ${batch.classCode}',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    _buildStatusChip(enrollment.status),
+                  ],
+                ),
+                if (batch.description.isNotEmpty) ...[
+                  const SizedBox(height: AppConstants.defaultPadding),
+                  Text(
+                    batch.description,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+                const SizedBox(height: AppConstants.defaultPadding),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.calendar_today,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Enrolled: ${Helpers.formatDate(enrollment.enrolledAt)}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const Spacer(),
+                    if (enrollment.status == EnrollmentStatus.pending)
+                      Text(
+                        'Waiting for approval',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.orange,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildStatusChip(EnrollmentStatus status) {
+    Color backgroundColor;
+    Color textColor;
+    String text;
+    IconData icon;
+
+    switch (status) {
+      case EnrollmentStatus.pending:
+        backgroundColor = Colors.orange.withValues(alpha: 0.1);
+        textColor = Colors.orange;
+        text = 'Pending';
+        icon = Icons.schedule;
+        break;
+      case EnrollmentStatus.active:
+        backgroundColor = Colors.green.withValues(alpha: 0.1);
+        textColor = Colors.green;
+        text = 'Active';
+        icon = Icons.check_circle;
+        break;
+      case EnrollmentStatus.completed:
+        backgroundColor = Colors.blue.withValues(alpha: 0.1);
+        textColor = Colors.blue;
+        text = 'Completed';
+        icon = Icons.school;
+        break;
+      case EnrollmentStatus.dropped:
+        backgroundColor = Colors.grey.withValues(alpha: 0.1);
+        textColor = Colors.grey;
+        text = 'Dropped';
+        icon = Icons.cancel;
+        break;
+      case EnrollmentStatus.declined:
+        backgroundColor = Colors.red.withValues(alpha: 0.1);
+        textColor = Colors.red;
+        text = 'Declined';
+        icon = Icons.close;
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: textColor.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: textColor),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: TextStyle(
+              color: textColor,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<Batch?> _getBatchById(String batchId) async {
+    try {
+      final firestoreService = FirestoreService();
+      return await firestoreService.getBatchById(batchId);
+    } catch (e) {
+      print('Error loading batch: $e');
+      return null;
+    }
   }
 
   Widget _buildEmptyBatchesState() {
@@ -410,6 +633,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
 
       // Show success message
       _showSuccessDialog(batch.name);
+      await _loadEnrollments(); // Refresh enrollments to show the new pending enrollment
       
     } catch (e) {
       Navigator.of(context).pop(); // Close loading dialog

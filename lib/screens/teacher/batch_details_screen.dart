@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter/services.dart';
 import '../../constants/app_constants.dart';
 import '../../models/batch.dart';
 import '../../models/enrollment.dart';
@@ -73,18 +73,15 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
         backgroundColor: const Color(AppColors.primaryColorValue),
         foregroundColor: Colors.white,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadEnrollments,
-          ),
-        ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? _buildErrorState()
-              : _buildContent(),
+      body: RefreshIndicator(
+        onRefresh: _loadEnrollments,
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _error != null
+                ? _buildErrorState()
+                : _buildContent(),
+      ),
     );
   }
 
@@ -182,12 +179,24 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        'Batch Code: ${widget.batch.classCode}',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      Row(
+                        children: [
+                          Text(
+                            'Batch Code: ${widget.batch.classCode}',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            onPressed: () => _copyBatchCode(widget.batch.classCode),
+                            icon: const Icon(Icons.copy, size: 20),
+                            tooltip: 'Copy batch code',
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -618,5 +627,22 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
         }
       }
     }
+  }
+
+  void _copyBatchCode(String batchCode) {
+    Clipboard.setData(ClipboardData(text: batchCode));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check, color: Colors.white),
+            const SizedBox(width: 8),
+            Text('Batch code "$batchCode" copied to clipboard'),
+          ],
+        ),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 }

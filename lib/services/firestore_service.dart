@@ -157,6 +157,22 @@ class FirestoreService {
     }
   }
 
+  Future<Batch?> getBatchById(String batchId) async {
+    try {
+      DocumentSnapshot doc = await _firestore
+          .collection('batches')
+          .doc(batchId)
+          .get();
+      
+      if (doc.exists) {
+        return Batch.fromFirestore(doc);
+      }
+      return null;
+    } catch (e) {
+      throw Exception('Failed to get batch by ID: ${e.toString()}');
+    }
+  }
+
   // Task Operations
   Future<String> createTask(Task task) async {
     try {
@@ -343,7 +359,6 @@ class FirestoreService {
     return _firestore
         .collection('enrollments')
         .where('studentId', isEqualTo: studentId)
-        .where('status', isEqualTo: 'active')
         .snapshots()
         .map((snapshot) {
           // Sort in memory to avoid complex index requirement

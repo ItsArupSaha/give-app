@@ -187,14 +187,6 @@ class _BatchManagementScreenState extends State<BatchManagementScreen> {
     final filteredBatches = _selectedCourseGroupId == null
         ? _allBatches
         : _allBatches.where((batch) => batch.courseGroupId == _selectedCourseGroupId).toList();
-    
-    // Debug information
-    print('Total batches loaded: ${_allBatches.length}');
-    print('Selected course group ID: $_selectedCourseGroupId');
-    print('Filtered batches: ${filteredBatches.length}');
-    for (final batch in _allBatches) {
-      print('Batch: ${batch.name}, Course Group ID: ${batch.courseGroupId}');
-    }
 
     if (filteredBatches.isEmpty) {
       return Center(
@@ -280,11 +272,24 @@ class _BatchManagementScreenState extends State<BatchManagementScreen> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        Text(
-                          'Class Code: ${batch.classCode}',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                        Row(
+                          children: [
+                            Text(
+                              'Class Code: ${batch.classCode}',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            GestureDetector(
+                              onTap: () => _copyBatchCode(batch.classCode),
+                              child: Icon(
+                                Icons.copy,
+                                size: 16,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
