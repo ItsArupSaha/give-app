@@ -358,7 +358,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         password: _passwordController.text,
         name: _nameController.text.trim(),
         whatsappNumber: '${_selectedCountryCode.dialCode}${_whatsappController.text.trim()}',
-        role: app_user.UserRole.student, // Always student
+        role: app_user.UserRole.registered, // New users are registered, not students
       );
       
       if (success && mounted) {

@@ -274,4 +274,19 @@ class AuthService {
     }
   }
 
+  // Update user role from registered to student
+  Future<void> promoteToStudent(String uid) async {
+    try {
+      await _firestore
+          .collection('users')
+          .doc(uid)
+          .update({
+        'role': 'student',
+        'updatedAt': Timestamp.fromDate(DateTime.now()),
+      });
+    } catch (e) {
+      throw Exception('Failed to promote user to student: ${e.toString()}');
+    }
+  }
+
 }

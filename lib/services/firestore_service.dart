@@ -289,9 +289,41 @@ class FirestoreService {
         'updatedAt': Timestamp.fromDate(DateTime.now()),
       });
       
+      // Promote user to student role if they are currently registered
+      await _promoteUserToStudentIfNeeded(enrollment.studentId);
+      
       return docRef.id;
     } catch (e) {
       throw Exception('Failed to create enrollment: ${e.toString()}');
+    }
+  }
+
+  // Helper method to promote user to student role if they are registered
+  Future<void> _promoteUserToStudentIfNeeded(String userId) async {
+    try {
+      DocumentSnapshot userDoc = await _firestore
+          .collection('users')
+          .doc(userId)
+          .get();
+      
+      if (userDoc.exists) {
+        Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
+        String currentRole = userData['role'] ?? '';
+        
+        // Only promote if user is currently registered
+        if (currentRole == 'registered') {
+          await _firestore
+              .collection('users')
+              .doc(userId)
+              .update({
+            'role': 'student',
+            'updatedAt': Timestamp.fromDate(DateTime.now()),
+          });
+        }
+      }
+    } catch (e) {
+      // Don't throw error for this as it's not critical to enrollment
+      print('Failed to promote user to student: ${e.toString()}');
     }
   }
 

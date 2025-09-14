@@ -11,6 +11,7 @@ import 'screens/teacher/teacher_dashboard.dart';
 import 'screens/student/student_dashboard.dart';
 import 'constants/app_constants.dart';
 import 'firebase_options.dart';
+import 'models/user.dart' as app_user;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -79,25 +80,6 @@ class GauravanaiApp extends StatelessWidget {
     );
   }
 
-  Widget _getHomeScreen(UserProvider userProvider) {
-    if (userProvider.isLoading) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-
-    if (userProvider.isLoggedIn) {
-      if (userProvider.isTeacher) {
-        return const TeacherDashboard();
-      } else if (userProvider.isStudent) {
-        return const StudentDashboard();
-      }
-    }
-
-    return const LoginScreen();
-  }
 }
 
 class _AppInitializer extends StatefulWidget {
@@ -140,7 +122,7 @@ class _AppInitializerState extends State<_AppInitializer> {
     if (userProvider.isLoggedIn) {
       if (userProvider.isTeacher) {
         return const TeacherDashboard();
-      } else if (userProvider.isStudent) {
+      } else if (userProvider.isStudent || userProvider.currentUser?.role == app_user.UserRole.registered) {
         return const StudentDashboard();
       }
     }

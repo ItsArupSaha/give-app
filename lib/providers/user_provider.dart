@@ -182,4 +182,23 @@ class UserProvider with ChangeNotifier {
   void clearError() {
     _clearError();
   }
+
+  // Promote user to student role
+  Future<bool> promoteToStudent() async {
+    if (_currentUser == null) return false;
+    
+    _setLoading(true);
+    try {
+      await _authService.promoteToStudent(_currentUser!.id);
+      // Refresh user data to get updated role
+      await refreshUser();
+      _clearError();
+      return true;
+    } catch (e) {
+      _setError('Failed to promote to student: ${e.toString()}');
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
 }
