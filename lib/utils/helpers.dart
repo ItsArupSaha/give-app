@@ -15,6 +15,18 @@ class Helpers {
     );
   }
 
+  // Generate 6-character alphanumeric batch code
+  static String generateBatchCode() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    Random random = Random();
+    return String.fromCharCodes(
+      Iterable.generate(
+        6,
+        (_) => chars.codeUnitAt(random.nextInt(chars.length)),
+      ),
+    );
+  }
+
   // Format date
   static String formatDate(DateTime date) {
     return DateFormat('MMM dd, yyyy').format(date);

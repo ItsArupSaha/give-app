@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum EnrollmentStatus { pending, active, completed, dropped }
+enum EnrollmentStatus { pending, active, completed, dropped, declined }
 
 class Enrollment {
   final String id;
@@ -94,4 +94,5 @@ class Enrollment {
   bool get isCompleted => status == EnrollmentStatus.completed;
   bool get isDropped => status == EnrollmentStatus.dropped;
   bool get isPending => status == EnrollmentStatus.pending;
+  bool get isDeclined => status == EnrollmentStatus.declined;
 }

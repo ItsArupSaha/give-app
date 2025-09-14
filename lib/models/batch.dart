@@ -15,6 +15,7 @@ class Batch {
   final DateTime? endDate;
   final String? schedule;
   final String? location;
+  final String? logoUrl;
 
   Batch({
     required this.id,
@@ -31,6 +32,7 @@ class Batch {
     this.endDate,
     this.schedule,
     this.location,
+    this.logoUrl,
   });
 
   factory Batch.fromFirestore(DocumentSnapshot doc) {
@@ -54,6 +56,7 @@ class Batch {
           : null,
       schedule: data['schedule'],
       location: data['location'],
+      logoUrl: data['logoUrl'],
     );
   }
 
@@ -72,6 +75,7 @@ class Batch {
       'endDate': endDate != null ? Timestamp.fromDate(endDate!) : null,
       'schedule': schedule,
       'location': location,
+      'logoUrl': logoUrl,
     };
   }
 
@@ -90,6 +94,7 @@ class Batch {
     DateTime? endDate,
     String? schedule,
     String? location,
+    String? logoUrl,
   }) {
     return Batch(
       id: id ?? this.id,
@@ -106,6 +111,7 @@ class Batch {
       endDate: endDate ?? this.endDate,
       schedule: schedule ?? this.schedule,
       location: location ?? this.location,
+      logoUrl: logoUrl ?? this.logoUrl,
     );
   }
 }

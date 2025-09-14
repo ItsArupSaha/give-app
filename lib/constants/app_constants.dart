@@ -51,7 +51,7 @@ class AppConstants {
   static const int maxPoints = 1000;
   
   // Notification
-  static const String notificationChannelId = 'gauravanai_notifications';
+  static const String notificationChannelId = 'gauravani_notifications';
   static const String notificationChannelName = 'Gauravani Notifications';
   static const String notificationChannelDescription = 'Notifications for tasks, comments, and updates';
 }

@@ -18,11 +18,11 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(const GauravanaiApp());
+  runApp(const GauravaniApp());
 }
 
-class GauravanaiApp extends StatelessWidget {
-  const GauravanaiApp({super.key});
+class GauravaniApp extends StatelessWidget {
+  const GauravaniApp({super.key});
 
   @override
   Widget build(BuildContext context) {

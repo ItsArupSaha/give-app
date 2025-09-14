@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../../providers/user_provider.dart';
 import '../../constants/app_constants.dart';
 import '../../utils/helpers.dart';
+import '../../services/firestore_service.dart';
+import '../../models/enrollment.dart';
 
 class StudentDashboard extends StatefulWidget {
   const StudentDashboard({super.key});
@@ -346,15 +348,151 @@ class _StudentDashboardState extends State<StudentDashboard> {
             onPressed: () {
               if (classCodeController.text.isNotEmpty) {
                 Navigator.pop(context);
-                // TODO: Implement join batch functionality
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Join batch functionality coming soon!'),
-                  ),
-                );
+                _joinBatch(classCodeController.text.trim());
               }
             },
             child: const Text(AppStrings.joinBatch),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _joinBatch(String batchCode) async {
+    if (batchCode.isEmpty) return;
+
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+
+    try {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final firestoreService = FirestoreService();
+
+      // Find batch by code
+      final batch = await firestoreService.getBatchByClassCode(batchCode);
+      
+      if (batch == null) {
+        Navigator.of(context).pop(); // Close loading dialog
+        _showErrorDialog('Invalid batch code. Please check the code and try again.');
+        return;
+      }
+
+      // Check if user is already enrolled
+      final existingEnrollments = await firestoreService.getEnrollmentsByStudent(userProvider.currentUser!.id).first;
+      final isAlreadyEnrolled = existingEnrollments.any((enrollment) => enrollment.batchId == batch.id);
+
+      if (isAlreadyEnrolled) {
+        Navigator.of(context).pop(); // Close loading dialog
+        _showErrorDialog('You are already enrolled in this batch.');
+        return;
+      }
+
+      // Create enrollment request
+      final enrollment = Enrollment(
+        id: '', // Will be set by Firestore
+        studentId: userProvider.currentUser!.id,
+        batchId: batch.id,
+        courseGroupId: batch.courseGroupId,
+        status: EnrollmentStatus.pending,
+        enrolledAt: DateTime.now(),
+        classCode: batchCode,
+      );
+
+      await firestoreService.createEnrollment(enrollment);
+
+      Navigator.of(context).pop(); // Close loading dialog
+
+      // Show success message
+      _showSuccessDialog(batch.name);
+      
+    } catch (e) {
+      Navigator.of(context).pop(); // Close loading dialog
+      _showErrorDialog('Failed to join batch: ${e.toString()}');
+    }
+  }
+
+  void _showSuccessDialog(String batchName) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.green),
+            SizedBox(width: 8),
+            Text('Request Sent'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Your enrollment request for "$batchName" has been sent successfully.'),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.info, color: Colors.blue, size: 16),
+                      SizedBox(width: 8),
+                      Text(
+                        'What happens next?',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    '• Your request is now pending approval\n'
+                    '• The teacher will review your request\n'
+                    '• You will be notified once approved\n'
+                    '• Check back later for updates',
+                    style: TextStyle(fontSize: 14),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.error, color: Colors.red),
+            SizedBox(width: 8),
+            Text('Error'),
+          ],
+        ),
+        content: Text(message),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
           ),
         ],
       ),

@@ -5,6 +5,7 @@ import '../models/task.dart';
 import '../models/submission.dart';
 import '../models/comment.dart';
 import '../models/enrollment.dart';
+import '../models/user.dart' as app_user;
 
 class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -358,7 +359,6 @@ class FirestoreService {
     return _firestore
         .collection('enrollments')
         .where('batchId', isEqualTo: batchId)
-        .where('status', isEqualTo: 'active')
         .snapshots()
         .map((snapshot) {
           // Sort in memory to avoid complex index requirement
@@ -444,6 +444,19 @@ class FirestoreService {
               ...doc.data(),
             })
             .toList());
+  }
+
+  // Get user by ID
+  Future<app_user.User?> getUserById(String uid) async {
+    try {
+      DocumentSnapshot doc = await _firestore.collection('users').doc(uid).get();
+      if (doc.exists) {
+        return app_user.User.fromFirestore(doc);
+      }
+      return null;
+    } catch (e) {
+      throw Exception('Failed to get user: ${e.toString()}');
+    }
   }
 
   // Get enrolled students count for a teacher
