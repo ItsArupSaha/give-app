@@ -6,6 +6,7 @@ import '../../utils/helpers.dart';
 import '../../services/firestore_service.dart';
 import '../../models/enrollment.dart';
 import '../../models/batch.dart';
+import 'batch_tasks_screen.dart';
 
 class StudentDashboard extends StatefulWidget {
   const StudentDashboard({super.key});
@@ -193,7 +194,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
                 Icons.assignment,
                 Theme.of(context).colorScheme.secondary,
                 () {
-                  // TODO: Navigate to tasks
+                  _showAllTasks();
                 },
               ),
             ),
@@ -325,7 +326,17 @@ class _StudentDashboardState extends State<StudentDashboard> {
                         ],
                       ),
                     ),
-                    _buildStatusChip(enrollment.status),
+                    Row(
+                      children: [
+                        if (enrollment.status == EnrollmentStatus.active)
+                          IconButton(
+                            onPressed: () => _viewBatchTasks(batch),
+                            icon: const Icon(Icons.assignment),
+                            tooltip: 'View Tasks',
+                          ),
+                        _buildStatusChip(enrollment.status),
+                      ],
+                    ),
                   ],
                 ),
                 if (batch.description.isNotEmpty) ...[
@@ -721,6 +732,52 @@ class _StudentDashboardState extends State<StudentDashboard> {
         ],
       ),
     );
+  }
+
+  void _viewBatchTasks(Batch batch) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => BatchTasksScreen(batch: batch),
+      ),
+    );
+  }
+
+  void _showAllTasks() async {
+    // Show all tasks from all active batches
+    final activeEnrollments = _enrollments.where((e) => e.status == EnrollmentStatus.active).toList();
+    if (activeEnrollments.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No active batches found'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+    
+    // For now, show the first active batch's tasks
+    // TODO: Create a comprehensive tasks view
+    try {
+      final firestoreService = FirestoreService();
+      final batch = await firestoreService.getBatchById(activeEnrollments.first.batchId);
+      if (batch != null) {
+        _viewBatchTasks(batch);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Batch not found'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error loading batch: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   void _showLogoutDialog() {

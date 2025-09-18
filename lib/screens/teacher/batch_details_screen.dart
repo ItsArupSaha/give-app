@@ -4,8 +4,10 @@ import '../../constants/app_constants.dart';
 import '../../models/batch.dart';
 import '../../models/enrollment.dart';
 import '../../models/user.dart' as app_user;
+import '../../models/task.dart';
 import '../../services/firestore_service.dart';
 import '../../utils/helpers.dart';
+import 'create_task_screen.dart';
 
 class BatchDetailsScreen extends StatefulWidget {
   final Batch batch;
@@ -23,6 +25,7 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   List<Enrollment> _pendingEnrollments = [];
   List<Enrollment> _activeEnrollments = [];
+  List<Task> _tasks = [];
   bool _isLoading = true;
   String? _error;
 
@@ -30,14 +33,10 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
   void initState() {
     super.initState();
     _loadEnrollments();
+    _loadTasks();
   }
 
   Future<void> _loadEnrollments() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-
     try {
       // Load pending enrollments
       final pendingStream = _firestoreService
@@ -55,6 +54,21 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
       setState(() {
         _pendingEnrollments = pendingEnrollments;
         _activeEnrollments = activeEnrollments;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+      });
+    }
+  }
+
+  Future<void> _loadTasks() async {
+    try {
+      final tasksStream = _firestoreService.getTasksByBatch(widget.batch.id);
+      final tasks = await tasksStream.first;
+      
+      setState(() {
+        _tasks = tasks;
         _isLoading = false;
       });
     } catch (e) {
@@ -75,12 +89,20 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
         elevation: 0,
       ),
       body: RefreshIndicator(
-        onRefresh: _loadEnrollments,
+        onRefresh: () async {
+          await _loadEnrollments();
+          await _loadTasks();
+        },
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _error != null
                 ? _buildErrorState()
                 : _buildContent(),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _navigateToCreateTask(),
+        icon: const Icon(Icons.assignment),
+        label: const Text('Create Task'),
       ),
     );
   }
@@ -141,6 +163,10 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
           
           // Active Students Section
           _buildActiveStudentsSection(),
+          const SizedBox(height: AppConstants.largePadding),
+          
+          // Tasks Section
+          _buildTasksSection(),
         ],
       ),
     );
@@ -644,5 +670,170 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
         behavior: SnackBarBehavior.floating,
       ),
     );
+  }
+
+  void _navigateToCreateTask() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => CreateTaskScreen(batch: widget.batch),
+      ),
+    ).then((_) {
+      // Refresh tasks when returning from create task screen
+      _loadTasks();
+    });
+  }
+
+  Widget _buildTasksSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(
+              Icons.assignment,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(width: AppConstants.smallPadding),
+            Text(
+              'Tasks (${_tasks.length})',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppConstants.defaultPadding),
+        if (_tasks.isEmpty)
+          _buildEmptyState('No tasks created yet')
+        else
+          ..._tasks.map((task) => _buildTaskCard(task)),
+      ],
+    );
+  }
+
+  Widget _buildTaskCard(Task task) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: AppConstants.smallPadding),
+      child: Padding(
+        padding: const EdgeInsets.all(AppConstants.defaultPadding),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  _getTaskTypeIcon(task.type),
+                  color: _getTaskTypeColor(task.type),
+                  size: 20,
+                ),
+                const SizedBox(width: AppConstants.smallPadding),
+                Expanded(
+                  child: Text(
+                    task.title,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                _buildTaskStatusChip(task.status),
+              ],
+            ),
+            const SizedBox(height: AppConstants.smallPadding),
+            Text(
+              task.description,
+              style: Theme.of(context).textTheme.bodyMedium,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: AppConstants.smallPadding),
+            Wrap(
+              spacing: AppConstants.smallPadding,
+              runSpacing: AppConstants.smallPadding,
+              children: [
+                _buildInfoChip(
+                  Icons.schedule,
+                  task.dueDate != null 
+                      ? 'Due: ${Helpers.formatDate(task.dueDate!)}'
+                      : 'No due date',
+                  task.isOverdue ? Colors.red : Colors.orange,
+                ),
+                _buildInfoChip(
+                  Icons.stars,
+                  '${task.maxPoints} points',
+                  Colors.blue,
+                ),
+                _buildInfoChip(
+                  Icons.people,
+                  '${task.submissionCount} submissions',
+                  Colors.green,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTaskStatusChip(TaskStatus status) {
+    Color color;
+    String text;
+    
+    switch (status) {
+      case TaskStatus.draft:
+        color = Colors.grey;
+        text = 'Draft';
+        break;
+      case TaskStatus.published:
+        color = Colors.green;
+        text = 'Published';
+        break;
+      case TaskStatus.closed:
+        color = Colors.red;
+        text = 'Closed';
+        break;
+    }
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
+
+  IconData _getTaskTypeIcon(TaskType type) {
+    switch (type) {
+      case TaskType.assignment:
+        return Icons.assignment;
+      case TaskType.quiz:
+        return Icons.quiz;
+      case TaskType.material:
+        return Icons.description;
+      case TaskType.announcement:
+        return Icons.announcement;
+    }
+  }
+
+  Color _getTaskTypeColor(TaskType type) {
+    switch (type) {
+      case TaskType.assignment:
+        return Colors.blue;
+      case TaskType.quiz:
+        return Colors.purple;
+      case TaskType.material:
+        return Colors.orange;
+      case TaskType.announcement:
+        return Colors.green;
+    }
   }
 }
