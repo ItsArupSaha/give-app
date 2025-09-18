@@ -26,7 +26,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   final _instructionsController = TextEditingController();
   final _pointsController = TextEditingController(text: '100');
   
-  TaskType _selectedType = TaskType.assignment;
+  TaskType _selectedType = TaskType.dailyListening;
   DateTime? _dueDate;
   bool _allowLateSubmission = true;
   int _lateSubmissionDays = 3;
@@ -73,13 +73,15 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
               _buildBasicInfoSection(),
               const SizedBox(height: AppConstants.largePadding),
               
-              // Due Date and Points
-              _buildDueDateAndPointsSection(),
-              const SizedBox(height: AppConstants.largePadding),
-              
-              // Late Submission Settings
-              _buildLateSubmissionSection(),
-              const SizedBox(height: AppConstants.largePadding),
+              // Due Date and Points (not for announcements)
+              if (_selectedType != TaskType.announcement) ...[
+                _buildDueDateAndPointsSection(),
+                const SizedBox(height: AppConstants.largePadding),
+                
+                // Late Submission Settings
+                _buildLateSubmissionSection(),
+                const SizedBox(height: AppConstants.largePadding),
+              ],
               
               // Instructions
               _buildInstructionsSection(),
@@ -309,12 +311,12 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
 
   String _getTaskTypeLabel(TaskType type) {
     switch (type) {
-      case TaskType.assignment:
-        return 'Assignment';
-      case TaskType.quiz:
-        return 'Quiz';
-      case TaskType.material:
-        return 'Material';
+      case TaskType.dailyListening:
+        return 'Daily Listening';
+      case TaskType.cba:
+        return 'CBA';
+      case TaskType.oba:
+        return 'OBA';
       case TaskType.announcement:
         return 'Announcement';
     }
@@ -355,10 +357,10 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         status: TaskStatus.published,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
-        dueDate: _dueDate,
-        maxPoints: int.parse(_pointsController.text.trim()),
-        allowLateSubmission: _allowLateSubmission,
-        lateSubmissionDays: _lateSubmissionDays,
+        dueDate: _selectedType == TaskType.announcement ? null : _dueDate,
+        maxPoints: _selectedType == TaskType.announcement ? 0 : int.parse(_pointsController.text.trim()),
+        allowLateSubmission: _selectedType == TaskType.announcement ? false : _allowLateSubmission,
+        lateSubmissionDays: _selectedType == TaskType.announcement ? 0 : _lateSubmissionDays,
         instructions: _instructionsController.text.trim().isEmpty 
             ? null 
             : _instructionsController.text.trim(),

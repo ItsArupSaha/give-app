@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum TaskStatus { draft, published, closed }
-enum TaskType { assignment, quiz, material, announcement }
+enum TaskType { dailyListening, cba, oba, announcement }
 
 class Task {
   final String id;
@@ -50,10 +50,7 @@ class Task {
       description: data['description'] ?? '',
       batchId: data['batchId'] ?? '',
       teacherId: data['teacherId'] ?? '',
-      type: TaskType.values.firstWhere(
-        (e) => e.toString() == 'TaskType.${data['type']}',
-        orElse: () => TaskType.assignment,
-      ),
+      type: _parseTaskType(data['type']),
       status: TaskStatus.values.firstWhere(
         (e) => e.toString() == 'TaskStatus.${data['status']}',
         orElse: () => TaskStatus.draft,
@@ -143,5 +140,30 @@ class Task {
     if (dueDate == null) return false;
     final daysUntilDue = dueDate!.difference(DateTime.now()).inDays;
     return daysUntilDue <= 3 && daysUntilDue >= 0;
+  }
+
+  static TaskType _parseTaskType(String? typeString) {
+    if (typeString == null) return TaskType.dailyListening;
+    
+    // Handle new task types
+    switch (typeString) {
+      case 'dailyListening':
+        return TaskType.dailyListening;
+      case 'cba':
+        return TaskType.cba;
+      case 'oba':
+        return TaskType.oba;
+      case 'announcement':
+        return TaskType.announcement;
+      // Backward compatibility with old task types
+      case 'assignment':
+        return TaskType.oba; // Map old assignment to OBA
+      case 'quiz':
+        return TaskType.cba; // Map old quiz to CBA
+      case 'material':
+        return TaskType.dailyListening; // Map old material to Daily Listening
+      default:
+        return TaskType.dailyListening;
+    }
   }
 }

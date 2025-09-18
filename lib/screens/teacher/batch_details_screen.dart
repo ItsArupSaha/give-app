@@ -750,23 +750,25 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
               spacing: AppConstants.smallPadding,
               runSpacing: AppConstants.smallPadding,
               children: [
-                _buildInfoChip(
-                  Icons.schedule,
-                  task.dueDate != null 
-                      ? 'Due: ${Helpers.formatDate(task.dueDate!)}'
-                      : 'No due date',
-                  task.isOverdue ? Colors.red : Colors.orange,
-                ),
-                _buildInfoChip(
-                  Icons.stars,
-                  '${task.maxPoints} points',
-                  Colors.blue,
-                ),
-                _buildInfoChip(
-                  Icons.people,
-                  '${task.submissionCount} submissions',
-                  Colors.green,
-                ),
+                if (task.type != TaskType.announcement) ...[
+                  _buildInfoChip(
+                    Icons.schedule,
+                    task.dueDate != null 
+                        ? 'Due: ${Helpers.formatDate(task.dueDate!)}'
+                        : 'No due date',
+                    task.isOverdue ? Colors.red : Colors.orange,
+                  ),
+                  _buildInfoChip(
+                    Icons.stars,
+                    '${task.maxPoints} points',
+                    Colors.blue,
+                  ),
+                  _buildInfoChip(
+                    Icons.people,
+                    '${task.submissionCount} submissions',
+                    Colors.green,
+                  ),
+                ],
               ],
             ),
           ],
@@ -813,12 +815,12 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
 
   IconData _getTaskTypeIcon(TaskType type) {
     switch (type) {
-      case TaskType.assignment:
-        return Icons.assignment;
-      case TaskType.quiz:
+      case TaskType.dailyListening:
+        return Icons.headphones;
+      case TaskType.cba:
         return Icons.quiz;
-      case TaskType.material:
-        return Icons.description;
+      case TaskType.oba:
+        return Icons.assignment;
       case TaskType.announcement:
         return Icons.announcement;
     }
@@ -826,11 +828,11 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
 
   Color _getTaskTypeColor(TaskType type) {
     switch (type) {
-      case TaskType.assignment:
+      case TaskType.dailyListening:
         return Colors.blue;
-      case TaskType.quiz:
+      case TaskType.cba:
         return Colors.purple;
-      case TaskType.material:
+      case TaskType.oba:
         return Colors.orange;
       case TaskType.announcement:
         return Colors.green;
