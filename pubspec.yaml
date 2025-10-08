@@ -61,6 +61,7 @@ dependencies:
   qr_flutter: ^4.1.0
   share_plus: ^10.0.2
   country_code_picker: ^3.0.0
+  audioplayers: ^6.0.0
   
   # Navigation
   go_router: ^14.6.1

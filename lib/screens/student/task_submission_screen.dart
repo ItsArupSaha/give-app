@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:record/record.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:path/path.dart' as p;
 import '../../constants/app_constants.dart';
 import '../../models/task.dart';
@@ -28,6 +29,7 @@ class TaskSubmissionScreen extends StatefulWidget {
 class _TaskSubmissionScreenState extends State<TaskSubmissionScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   final AudioRecorder _recorder = AudioRecorder();
+  final AudioPlayer _player = AudioPlayer();
   bool _isRecording = false;
   bool _isPaused = false;
   bool _hasRecording = false;
@@ -40,6 +42,7 @@ class _TaskSubmissionScreenState extends State<TaskSubmissionScreen> {
   void dispose() {
     _notesController.dispose();
     _recorder.dispose();
+    _player.dispose();
     super.dispose();
   }
 
@@ -594,13 +597,19 @@ class _TaskSubmissionScreenState extends State<TaskSubmissionScreen> {
     });
   }
 
-  void _playRecording() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Recording saved locally. You can play it with any audio app.'),
-        backgroundColor: Colors.blue,
-      ),
-    );
+  Future<void> _playRecording() async {
+    if (_recordingPath == null) return;
+    try {
+      await _player.stop();
+      await _player.play(DeviceFileSource(_recordingPath!));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Unable to play recording: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   void _deleteRecording() {
