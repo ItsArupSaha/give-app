@@ -21,8 +21,8 @@ subprojects {
     configurations.all {
         resolutionStrategy {
             force(
-                "androidx.core:core:1.12.0",
-                "androidx.core:core-ktx:1.12.0"
+                "androidx.core:core:1.13.1",
+                "androidx.core:core-ktx:1.13.1"
             )
         }
     }
