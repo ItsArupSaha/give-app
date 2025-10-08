@@ -232,11 +232,13 @@ class _BatchTasksScreenState extends State<BatchTasksScreen> {
   }
 
   Widget _buildTaskCard(Task task) {
+    final submission = _submissions[task.id];
+    final isSubmitted = submission?.status == SubmissionStatus.submitted;
     return Card(
       margin: const EdgeInsets.only(bottom: AppConstants.smallPadding),
       child: InkWell(
         borderRadius: BorderRadius.circular(AppConstants.borderRadius),
-        onTap: task.type == TaskType.announcement ? null : () => _viewTaskDetails(task),
+        onTap: task.type == TaskType.announcement || isSubmitted ? null : () => _viewTaskDetails(task),
         child: Padding(
           padding: const EdgeInsets.all(AppConstants.defaultPadding),
           child: Column(

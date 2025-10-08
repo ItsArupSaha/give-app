@@ -37,6 +37,7 @@ class _TaskSubmissionScreenState extends State<TaskSubmissionScreen> {
   List<String> _uploadedFiles = [];
   final TextEditingController _notesController = TextEditingController();
   bool _isSubmitting = false;
+  bool _alreadySubmitted = false;
 
   @override
   void dispose() {
@@ -55,7 +56,7 @@ class _TaskSubmissionScreenState extends State<TaskSubmissionScreen> {
         foregroundColor: Colors.white,
         actions: [
           TextButton(
-            onPressed: _isSubmitting ? null : _submitTask,
+            onPressed: _isSubmitting || _alreadySubmitted ? null : _submitTask,
             child: _isSubmitting
                 ? const SizedBox(
                     width: 20,
@@ -65,9 +66,9 @@ class _TaskSubmissionScreenState extends State<TaskSubmissionScreen> {
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   )
-                : const Text(
-                    'Submit',
-                    style: TextStyle(color: Colors.white, fontSize: 16),
+                : Text(
+                    _alreadySubmitted ? 'Submitted' : 'Submit',
+                    style: const TextStyle(color: Colors.white, fontSize: 16),
                   ),
           ),
         ],
@@ -82,7 +83,10 @@ class _TaskSubmissionScreenState extends State<TaskSubmissionScreen> {
             const SizedBox(height: AppConstants.largePadding),
             
             // Submission Options
-            _buildSubmissionOptions(),
+            AbsorbPointer(
+              absorbing: _alreadySubmitted,
+              child: _buildSubmissionOptions(),
+            ),
             const SizedBox(height: AppConstants.largePadding),
             
             // Notes Section
@@ -665,6 +669,9 @@ class _TaskSubmissionScreenState extends State<TaskSubmissionScreen> {
   }
 
   Future<void> _submitTask() async {
+    if (_alreadySubmitted) {
+      return;
+    }
     // For Daily Listening, no validation needed - just mark as submitted for the date
     if (widget.task.type != TaskType.dailyListening) {
       if (!_hasRecording && _uploadedFiles.isEmpty && _notesController.text.trim().isEmpty) {
@@ -727,6 +734,20 @@ class _TaskSubmissionScreenState extends State<TaskSubmissionScreen> {
       );
 
       await _firestoreService.createSubmission(submission);
+
+      // Delete local recording after successful submission
+      if (_recordingPath != null) {
+        try {
+          final f = File(_recordingPath!);
+          if (await f.exists()) {
+            await f.delete();
+          }
+        } catch (_) {}
+        _recordingPath = null;
+        _hasRecording = false;
+      }
+
+      _alreadySubmitted = true;
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
