@@ -46,6 +46,7 @@ dependencies:
   file_picker: ^8.1.2
   path_provider: ^2.1.4
   path: ^1.9.0
+  permission_handler: ^11.3.1
   
   # UI Components
   google_fonts: ^6.2.1

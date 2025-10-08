@@ -3,9 +3,11 @@ import 'package:provider/provider.dart';
 import '../../constants/app_constants.dart';
 import '../../models/batch.dart';
 import '../../models/task.dart';
+import '../../models/submission.dart';
 import '../../providers/user_provider.dart';
 import '../../services/firestore_service.dart';
 import '../../utils/helpers.dart';
+import 'task_submission_screen.dart';
 
 class BatchTasksScreen extends StatefulWidget {
   final Batch batch;
@@ -22,6 +24,7 @@ class BatchTasksScreen extends StatefulWidget {
 class _BatchTasksScreenState extends State<BatchTasksScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   List<Task> _tasks = [];
+  Map<String, Submission> _submissions = {};
   bool _isLoading = true;
   String? _error;
 
@@ -29,14 +32,10 @@ class _BatchTasksScreenState extends State<BatchTasksScreen> {
   void initState() {
     super.initState();
     _loadTasks();
+    _loadSubmissions();
   }
 
   Future<void> _loadTasks() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-
     try {
       final tasksStream = _firestoreService.getTasksByBatch(widget.batch.id);
       final tasks = await tasksStream.first;
@@ -53,6 +52,27 @@ class _BatchTasksScreenState extends State<BatchTasksScreen> {
     }
   }
 
+  Future<void> _loadSubmissions() async {
+    try {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      if (userProvider.currentUser != null) {
+        final submissionsStream = _firestoreService.getSubmissionsByStudent(userProvider.currentUser!.id);
+        final submissions = await submissionsStream.first;
+        
+        Map<String, Submission> submissionMap = {};
+        for (var submission in submissions) {
+          submissionMap[submission.taskId] = submission;
+        }
+        
+        setState(() {
+          _submissions = submissionMap;
+        });
+      }
+    } catch (e) {
+      print('Error loading submissions: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -62,7 +82,10 @@ class _BatchTasksScreenState extends State<BatchTasksScreen> {
         foregroundColor: Colors.white,
       ),
       body: RefreshIndicator(
-        onRefresh: _loadTasks,
+        onRefresh: () async {
+          await _loadTasks();
+          await _loadSubmissions();
+        },
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _error != null
@@ -213,7 +236,7 @@ class _BatchTasksScreenState extends State<BatchTasksScreen> {
       margin: const EdgeInsets.only(bottom: AppConstants.smallPadding),
       child: InkWell(
         borderRadius: BorderRadius.circular(AppConstants.borderRadius),
-        onTap: () => _viewTaskDetails(task),
+        onTap: task.type == TaskType.announcement ? null : () => _viewTaskDetails(task),
         child: Padding(
           padding: const EdgeInsets.all(AppConstants.defaultPadding),
           child: Column(
@@ -235,7 +258,13 @@ class _BatchTasksScreenState extends State<BatchTasksScreen> {
                       ),
                     ),
                   ),
-                  _buildTaskStatusChip(task.status),
+                  Row(
+                  children: [
+                    _buildSubmissionStatusChip(task),
+                    const SizedBox(width: AppConstants.smallPadding),
+                    _buildTaskStatusChip(task.status),
+                  ],
+                ),
                 ],
               ),
               const SizedBox(height: AppConstants.smallPadding),
@@ -274,6 +303,73 @@ class _BatchTasksScreenState extends State<BatchTasksScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildSubmissionStatusChip(Task task) {
+    final submission = _submissions[task.id];
+    
+    if (submission == null) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.grey.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Text(
+          'Not Submitted',
+          style: TextStyle(
+            color: Colors.grey,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      );
+    }
+    
+    Color color;
+    String text;
+    IconData icon;
+    
+    switch (submission.status) {
+      case SubmissionStatus.draft:
+        color = Colors.orange;
+        text = 'Draft';
+        icon = Icons.edit;
+        break;
+      case SubmissionStatus.submitted:
+        color = Colors.green;
+        text = 'Submitted';
+        icon = Icons.check_circle;
+        break;
+      case SubmissionStatus.graded:
+        color = Colors.blue;
+        text = 'Graded';
+        icon = Icons.grade;
+        break;
+    }
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -400,12 +496,21 @@ class _BatchTasksScreenState extends State<BatchTasksScreen> {
   }
 
   void _viewTaskDetails(Task task) {
-    // TODO: Navigate to task details screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Viewing task: ${task.title}'),
-        backgroundColor: Colors.blue,
+    // Announcements are not clickable
+    if (task.type == TaskType.announcement) {
+      return;
+    }
+    
+    // Navigate to task submission screen for other task types
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => TaskSubmissionScreen(task: task),
       ),
-    );
+    ).then((submitted) {
+      // Refresh submissions if task was submitted
+      if (submitted == true) {
+        _loadSubmissions();
+      }
+    });
   }
 }

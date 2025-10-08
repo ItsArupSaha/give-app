@@ -290,6 +290,39 @@ class FirestoreService {
         });
   }
 
+  Stream<List<Submission>> getSubmissionsByStudent(String studentId) {
+    return _firestore
+        .collection('submissions')
+        .where('studentId', isEqualTo: studentId)
+        .snapshots()
+        .map((snapshot) {
+          // Sort in memory to avoid complex index requirement
+          final submissions = snapshot.docs
+              .map((doc) => Submission.fromFirestore(doc))
+              .toList();
+          submissions.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return submissions;
+        });
+  }
+
+  Future<List<Submission>> getSubmissionsByBatch(String batchId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('submissions')
+          .where('batchId', isEqualTo: batchId)
+          .get();
+      
+      final submissions = snapshot.docs
+          .map((doc) => Submission.fromFirestore(doc))
+          .toList();
+      
+      submissions.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return submissions;
+    } catch (e) {
+      throw Exception('Failed to get submissions by batch: ${e.toString()}');
+    }
+  }
+
   // Enrollment Operations
   Future<String> createEnrollment(Enrollment enrollment) async {
     try {

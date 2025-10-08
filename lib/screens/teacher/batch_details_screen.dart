@@ -8,6 +8,7 @@ import '../../models/task.dart';
 import '../../services/firestore_service.dart';
 import '../../utils/helpers.dart';
 import 'create_task_screen.dart';
+import 'submission_report_screen.dart';
 
 class BatchDetailsScreen extends StatefulWidget {
   final Batch batch;
@@ -99,10 +100,23 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
                 ? _buildErrorState()
                 : _buildContent(),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _navigateToCreateTask(),
-        icon: const Icon(Icons.assignment),
-        label: const Text('Create Task'),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            onPressed: () => _showSubmissionReport(),
+            heroTag: "report",
+            child: const Icon(Icons.analytics),
+            tooltip: 'Submission Report',
+          ),
+          const SizedBox(height: 8),
+          FloatingActionButton.extended(
+            onPressed: () => _navigateToCreateTask(),
+            icon: const Icon(Icons.assignment),
+            label: const Text('Create Task'),
+            heroTag: "create",
+          ),
+        ],
       ),
     );
   }
@@ -681,6 +695,14 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
       // Refresh tasks when returning from create task screen
       _loadTasks();
     });
+  }
+
+  void _showSubmissionReport() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => SubmissionReportScreen(batch: widget.batch),
+      ),
+    );
   }
 
   Widget _buildTasksSection() {
