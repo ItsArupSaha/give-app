@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:record/record.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 import '../../constants/app_constants.dart';
 import '../../models/task.dart';
 import '../../models/submission.dart';
@@ -23,7 +27,9 @@ class TaskSubmissionScreen extends StatefulWidget {
 
 class _TaskSubmissionScreenState extends State<TaskSubmissionScreen> {
   final FirestoreService _firestoreService = FirestoreService();
+  final AudioRecorder _recorder = AudioRecorder();
   bool _isRecording = false;
+  bool _isPaused = false;
   bool _hasRecording = false;
   String? _recordingPath;
   List<String> _uploadedFiles = [];
@@ -33,6 +39,7 @@ class _TaskSubmissionScreenState extends State<TaskSubmissionScreen> {
   @override
   void dispose() {
     _notesController.dispose();
+    _recorder.dispose();
     super.dispose();
   }
 
@@ -239,18 +246,68 @@ class _TaskSubmissionScreenState extends State<TaskSubmissionScreen> {
               const SizedBox(height: AppConstants.defaultPadding),
               Row(
                 children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: _isRecording ? _stopRecording : _startRecording,
-                      icon: Icon(_isRecording ? Icons.stop : Icons.mic),
-                      label: Text(_isRecording ? 'Stop Recording' : 'Start Recording'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _isRecording ? Colors.red : Theme.of(context).colorScheme.primary,
-                        foregroundColor: Colors.white,
+                  if (!_isRecording) ...[
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: _startRecording,
+                        icon: const Icon(Icons.mic),
+                        label: const Text('Start Recording'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.primary,
+                          foregroundColor: Colors.white,
+                        ),
                       ),
                     ),
-                  ),
-                  if (_hasRecording) ...[
+                  ] else if (_isPaused) ...[
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: _resumeRecording,
+                        icon: const Icon(Icons.play_arrow),
+                        label: const Text('Resume'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppConstants.smallPadding),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: _stopRecording,
+                        icon: const Icon(Icons.stop),
+                        label: const Text('Stop'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ] else ...[
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: _pauseRecording,
+                        icon: const Icon(Icons.pause),
+                        label: const Text('Pause'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppConstants.smallPadding),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: _stopRecording,
+                        icon: const Icon(Icons.stop),
+                        label: const Text('Stop'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                  if (_hasRecording && !_isRecording) ...[
                     const SizedBox(width: AppConstants.smallPadding),
                     IconButton(
                       onPressed: _playRecording,
@@ -436,20 +493,15 @@ class _TaskSubmissionScreenState extends State<TaskSubmissionScreen> {
   }
 
   Future<void> _startRecording() async {
-    // Check current permission status
+    // Request mic permission
     var status = await Permission.microphone.status;
-    
     if (status.isDenied) {
-      // Request permission
       status = await Permission.microphone.request();
     }
-    
     if (status.isPermanentlyDenied) {
-      // Show dialog to open app settings
       _showPermissionDialog();
       return;
     }
-    
     if (!status.isGranted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -460,26 +512,33 @@ class _TaskSubmissionScreenState extends State<TaskSubmissionScreen> {
       return;
     }
 
+    // Prepare local path
+    final dir = await getApplicationDocumentsDirectory();
+    final recordingsDir = Directory(p.join(dir.path, 'recordings'));
+    if (!await recordingsDir.exists()) {
+      await recordingsDir.create(recursive: true);
+    }
+    final filePath = p.join(
+      recordingsDir.path,
+      'dl_${DateTime.now().millisecondsSinceEpoch}.m4a',
+    );
+
+    // Start recording
+    await _recorder.start(
+      const RecordConfig(
+        encoder: AudioEncoder.aacLc,
+        bitRate: 128000,
+        sampleRate: 44100,
+      ),
+      path: filePath,
+    );
+
     setState(() {
       _isRecording = true;
+      _isPaused = false;
+      _hasRecording = false;
+      _recordingPath = filePath;
     });
-
-    // TODO: Implement actual recording logic
-    // For now, simulate recording
-    await Future.delayed(const Duration(seconds: 2));
-    
-    setState(() {
-      _isRecording = false;
-      _hasRecording = true;
-      _recordingPath = 'recording_${DateTime.now().millisecondsSinceEpoch}.m4a';
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Recording completed'),
-        backgroundColor: Colors.green,
-      ),
-    );
   }
 
   void _showPermissionDialog() {
@@ -507,26 +566,38 @@ class _TaskSubmissionScreenState extends State<TaskSubmissionScreen> {
     );
   }
 
+  Future<void> _pauseRecording() async {
+    if (await _recorder.isRecording()) {
+      await _recorder.pause();
+      setState(() {
+        _isPaused = true;
+      });
+    }
+  }
+
+  Future<void> _resumeRecording() async {
+    if (await _recorder.isPaused()) {
+      await _recorder.resume();
+      setState(() {
+        _isPaused = false;
+      });
+    }
+  }
+
   Future<void> _stopRecording() async {
+    final path = await _recorder.stop();
     setState(() {
       _isRecording = false;
-      _hasRecording = true;
+      _isPaused = false;
+      _hasRecording = path != null && path.isNotEmpty;
+      _recordingPath = path ?? _recordingPath;
     });
-
-    // TODO: Implement actual stop recording logic
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Recording stopped'),
-        backgroundColor: Colors.orange,
-      ),
-    );
   }
 
   void _playRecording() {
-    // TODO: Implement play recording logic
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Playing recording...'),
+        content: Text('Recording saved locally. You can play it with any audio app.'),
         backgroundColor: Colors.blue,
       ),
     );

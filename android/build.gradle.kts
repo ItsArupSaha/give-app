@@ -16,6 +16,18 @@ subprojects {
     project.evaluationDependsOn(":app")
 }
 
+// Force compatible AndroidX core versions to avoid requiring compileSdk 36 / AGP 8.9+
+subprojects {
+    configurations.all {
+        resolutionStrategy {
+            force(
+                "androidx.core:core:1.12.0",
+                "androidx.core:core-ktx:1.12.0"
+            )
+        }
+    }
+}
+
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
