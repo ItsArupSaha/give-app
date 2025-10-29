@@ -536,6 +536,8 @@ class _TaskSubmissionScreenState extends State<TaskSubmissionScreen> {
         return Icons.quiz;
       case TaskType.oba:
         return Icons.assignment;
+      case TaskType.slokaMemorization:
+        return Icons.menu_book;
       case TaskType.announcement:
         return Icons.announcement;
     }
@@ -549,6 +551,8 @@ class _TaskSubmissionScreenState extends State<TaskSubmissionScreen> {
         return Colors.purple;
       case TaskType.oba:
         return Colors.orange;
+      case TaskType.slokaMemorization:
+        return Colors.teal;
       case TaskType.announcement:
         return Colors.green;
     }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../constants/app_constants.dart';
 import '../../models/batch.dart';
 import '../../models/task.dart';
@@ -10,10 +11,7 @@ import '../../utils/helpers.dart';
 class CreateTaskScreen extends StatefulWidget {
   final Batch batch;
 
-  const CreateTaskScreen({
-    super.key,
-    required this.batch,
-  });
+  const CreateTaskScreen({super.key, required this.batch});
 
   @override
   State<CreateTaskScreen> createState() => _CreateTaskScreenState();
@@ -25,7 +23,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   final _descriptionController = TextEditingController();
   final _instructionsController = TextEditingController();
   final _pointsController = TextEditingController(text: '100');
-  
+
   TaskType _selectedType = TaskType.dailyListening;
   DateTime? _dueDate;
   bool _allowLateSubmission = true;
@@ -68,21 +66,21 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
               // Task Type Selection
               _buildTaskTypeSection(),
               const SizedBox(height: AppConstants.largePadding),
-              
+
               // Basic Information
               _buildBasicInfoSection(),
               const SizedBox(height: AppConstants.largePadding),
-              
+
               // Due Date and Points (not for announcements)
               if (_selectedType != TaskType.announcement) ...[
                 _buildDueDateAndPointsSection(),
                 const SizedBox(height: AppConstants.largePadding),
-                
+
                 // Late Submission Settings
                 _buildLateSubmissionSection(),
                 const SizedBox(height: AppConstants.largePadding),
               ],
-              
+
               // Instructions
               _buildInstructionsSection(),
             ],
@@ -101,9 +99,9 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
           children: [
             Text(
               'Task Type',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: AppConstants.defaultPadding),
             Wrap(
@@ -118,7 +116,9 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                       _selectedType = type;
                     });
                   },
-                  selectedColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                  selectedColor: Theme.of(
+                    context,
+                  ).colorScheme.primary.withOpacity(0.2),
                   checkmarkColor: Theme.of(context).colorScheme.primary,
                 );
               }).toList(),
@@ -138,9 +138,9 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
           children: [
             Text(
               'Basic Information',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: AppConstants.defaultPadding),
             TextFormField(
@@ -188,9 +188,9 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
           children: [
             Text(
               'Due Date & Points',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: AppConstants.defaultPadding),
             Row(
@@ -198,8 +198,8 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                 Expanded(
                   child: ListTile(
                     title: Text(
-                      _dueDate == null 
-                          ? 'No due date' 
+                      _dueDate == null
+                          ? 'No due date'
                           : 'Due: ${Helpers.formatDate(_dueDate!)}',
                     ),
                     trailing: const Icon(Icons.calendar_today),
@@ -245,9 +245,9 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
           children: [
             Text(
               'Late Submission',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: AppConstants.defaultPadding),
             SwitchListTile(
@@ -289,9 +289,9 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
           children: [
             Text(
               'Instructions (Optional)',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: AppConstants.defaultPadding),
             TextFormField(
@@ -317,6 +317,8 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         return 'CBA';
       case TaskType.oba:
         return 'OBA';
+      case TaskType.slokaMemorization:
+        return 'Sloka Memorization';
       case TaskType.announcement:
         return 'Announcement';
     }
@@ -358,11 +360,17 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
         dueDate: _selectedType == TaskType.announcement ? null : _dueDate,
-        maxPoints: _selectedType == TaskType.announcement ? 0 : int.parse(_pointsController.text.trim()),
-        allowLateSubmission: _selectedType == TaskType.announcement ? false : _allowLateSubmission,
-        lateSubmissionDays: _selectedType == TaskType.announcement ? 0 : _lateSubmissionDays,
-        instructions: _instructionsController.text.trim().isEmpty 
-            ? null 
+        maxPoints: _selectedType == TaskType.announcement
+            ? 0
+            : int.parse(_pointsController.text.trim()),
+        allowLateSubmission: _selectedType == TaskType.announcement
+            ? false
+            : _allowLateSubmission,
+        lateSubmissionDays: _selectedType == TaskType.announcement
+            ? 0
+            : _lateSubmissionDays,
+        instructions: _instructionsController.text.trim().isEmpty
+            ? null
             : _instructionsController.text.trim(),
       );
 

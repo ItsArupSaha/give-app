@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../../constants/app_constants.dart';
 import '../../models/batch.dart';
 import '../../models/enrollment.dart';
-import '../../models/user.dart' as app_user;
 import '../../models/task.dart';
+import '../../models/user.dart' as app_user;
 import '../../services/firestore_service.dart';
 import '../../utils/helpers.dart';
 import 'create_task_screen.dart';
@@ -13,10 +14,7 @@ import 'submission_report_screen.dart';
 class BatchDetailsScreen extends StatefulWidget {
   final Batch batch;
 
-  const BatchDetailsScreen({
-    super.key,
-    required this.batch,
-  });
+  const BatchDetailsScreen({super.key, required this.batch});
 
   @override
   State<BatchDetailsScreen> createState() => _BatchDetailsScreenState();
@@ -43,7 +41,7 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
       final pendingStream = _firestoreService
           .getEnrollmentsByBatch(widget.batch.id)
           .map((enrollments) => enrollments.where((e) => e.isPending).toList());
-      
+
       // Load active enrollments
       final activeStream = _firestoreService
           .getEnrollmentsByBatch(widget.batch.id)
@@ -67,7 +65,7 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
     try {
       final tasksStream = _firestoreService.getTasksByBatch(widget.batch.id);
       final tasks = await tasksStream.first;
-      
+
       setState(() {
         _tasks = tasks;
         _isLoading = false;
@@ -97,8 +95,8 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _error != null
-                ? _buildErrorState()
-                : _buildContent(),
+            ? _buildErrorState()
+            : _buildContent(),
       ),
       floatingActionButton: Column(
         mainAxisAlignment: MainAxisAlignment.end,
@@ -136,9 +134,9 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
             const SizedBox(height: AppConstants.defaultPadding),
             Text(
               'Error Loading Data',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: AppConstants.smallPadding),
             Text(
@@ -168,17 +166,17 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
           // Batch Info Card
           _buildBatchInfoCard(),
           const SizedBox(height: AppConstants.largePadding),
-          
+
           // Pending Requests Section
           if (_pendingEnrollments.isNotEmpty) ...[
             _buildPendingRequestsSection(),
             const SizedBox(height: AppConstants.largePadding),
           ],
-          
+
           // Active Students Section
           _buildActiveStudentsSection(),
           const SizedBox(height: AppConstants.largePadding),
-          
+
           // Tasks Section
           _buildTasksSection(),
         ],
@@ -214,23 +212,24 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
                     children: [
                       Text(
                         widget.batch.name,
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 4),
                       Row(
                         children: [
                           Text(
                             'Batch Code: ${widget.batch.classCode}',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
                           ),
                           const SizedBox(width: 8),
                           IconButton(
-                            onPressed: () => _copyBatchCode(widget.batch.classCode),
+                            onPressed: () =>
+                                _copyBatchCode(widget.batch.classCode),
                             icon: const Icon(Icons.copy, size: 20),
                             tooltip: 'Copy batch code',
                             padding: EdgeInsets.zero,
@@ -276,21 +275,20 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
       children: [
         Row(
           children: [
-            Icon(
-              Icons.pending_actions,
-              color: Colors.orange,
-            ),
+            Icon(Icons.pending_actions, color: Colors.orange),
             const SizedBox(width: AppConstants.smallPadding),
             Text(
               'Pending Requests (${_pendingEnrollments.length})',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
           ],
         ),
         const SizedBox(height: AppConstants.defaultPadding),
-        ..._pendingEnrollments.map((enrollment) => _buildPendingEnrollmentCard(enrollment)),
+        ..._pendingEnrollments.map(
+          (enrollment) => _buildPendingEnrollmentCard(enrollment),
+        ),
       ],
     );
   }
@@ -301,16 +299,13 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
       children: [
         Row(
           children: [
-            Icon(
-              Icons.people,
-              color: Colors.green,
-            ),
+            Icon(Icons.people, color: Colors.green),
             const SizedBox(width: AppConstants.smallPadding),
             Text(
               'Active Students (${_activeEnrollments.length})',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -318,7 +313,9 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
         if (_activeEnrollments.isEmpty)
           _buildEmptyState('No active students yet')
         else
-          ..._activeEnrollments.map((enrollment) => _buildActiveEnrollmentCard(enrollment)),
+          ..._activeEnrollments.map(
+            (enrollment) => _buildActiveEnrollmentCard(enrollment),
+          ),
       ],
     );
   }
@@ -557,12 +554,15 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
       final updatedEnrollment = enrollment.copyWith(
         status: EnrollmentStatus.active,
       );
-      
-      await _firestoreService.updateEnrollment(enrollment.id, updatedEnrollment);
-      
+
+      await _firestoreService.updateEnrollment(
+        enrollment.id,
+        updatedEnrollment,
+      );
+
       // Refresh the data
       await _loadEnrollments();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -589,12 +589,15 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
       final updatedEnrollment = enrollment.copyWith(
         status: EnrollmentStatus.declined,
       );
-      
-      await _firestoreService.updateEnrollment(enrollment.id, updatedEnrollment);
-      
+
+      await _firestoreService.updateEnrollment(
+        enrollment.id,
+        updatedEnrollment,
+      );
+
       // Refresh the data
       await _loadEnrollments();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -620,7 +623,9 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Remove Student'),
-        content: const Text('Are you sure you want to remove this student from the batch?'),
+        content: const Text(
+          'Are you sure you want to remove this student from the batch?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -642,12 +647,15 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
           status: EnrollmentStatus.dropped,
           droppedAt: DateTime.now(),
         );
-        
-        await _firestoreService.updateEnrollment(enrollment.id, updatedEnrollment);
-        
+
+        await _firestoreService.updateEnrollment(
+          enrollment.id,
+          updatedEnrollment,
+        );
+
         // Refresh the data
         await _loadEnrollments();
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -687,14 +695,16 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
   }
 
   void _navigateToCreateTask() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => CreateTaskScreen(batch: widget.batch),
-      ),
-    ).then((_) {
-      // Refresh tasks when returning from create task screen
-      _loadTasks();
-    });
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute(
+            builder: (context) => CreateTaskScreen(batch: widget.batch),
+          ),
+        )
+        .then((_) {
+          // Refresh tasks when returning from create task screen
+          _loadTasks();
+        });
   }
 
   void _showSubmissionReport() {
@@ -718,9 +728,9 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
             const SizedBox(width: AppConstants.smallPadding),
             Text(
               'Tasks (${_tasks.length})',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -775,7 +785,7 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
                 if (task.type != TaskType.announcement) ...[
                   _buildInfoChip(
                     Icons.schedule,
-                    task.dueDate != null 
+                    task.dueDate != null
                         ? 'Due: ${Helpers.formatDate(task.dueDate!)}'
                         : 'No due date',
                     task.isOverdue ? Colors.red : Colors.orange,
@@ -802,7 +812,7 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
   Widget _buildTaskStatusChip(TaskStatus status) {
     Color color;
     String text;
-    
+
     switch (status) {
       case TaskStatus.draft:
         color = Colors.grey;
@@ -817,7 +827,7 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
         text = 'Closed';
         break;
     }
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -843,6 +853,8 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
         return Icons.quiz;
       case TaskType.oba:
         return Icons.assignment;
+      case TaskType.slokaMemorization:
+        return Icons.menu_book;
       case TaskType.announcement:
         return Icons.announcement;
     }
@@ -856,6 +868,8 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
         return Colors.purple;
       case TaskType.oba:
         return Colors.orange;
+      case TaskType.slokaMemorization:
+        return Colors.teal;
       case TaskType.announcement:
         return Colors.green;
     }

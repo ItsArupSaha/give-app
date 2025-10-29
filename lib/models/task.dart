@@ -1,7 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum TaskStatus { draft, published, closed }
-enum TaskType { dailyListening, cba, oba, announcement }
+
+enum TaskType { dailyListening, cba, oba, slokaMemorization, announcement }
 
 class Task {
   final String id;
@@ -62,7 +63,10 @@ class Task {
           : null,
       maxPoints: data['maxPoints'] ?? 100,
       attachments: List<String>.from(data['attachments'] ?? []),
-      allowedFileTypes: List<String>.from(data['allowedFileTypes'] ?? ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png']),
+      allowedFileTypes: List<String>.from(
+        data['allowedFileTypes'] ??
+            ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'],
+      ),
       allowLateSubmission: data['allowLateSubmission'] ?? true,
       lateSubmissionDays: data['lateSubmissionDays'] ?? 3,
       instructions: data['instructions'],
@@ -144,7 +148,7 @@ class Task {
 
   static TaskType _parseTaskType(String? typeString) {
     if (typeString == null) return TaskType.dailyListening;
-    
+
     // Handle new task types
     switch (typeString) {
       case 'dailyListening':
@@ -153,6 +157,8 @@ class Task {
         return TaskType.cba;
       case 'oba':
         return TaskType.oba;
+      case 'slokaMemorization':
+        return TaskType.slokaMemorization;
       case 'announcement':
         return TaskType.announcement;
       // Backward compatibility with old task types
