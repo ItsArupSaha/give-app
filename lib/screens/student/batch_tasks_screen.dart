@@ -1,9 +1,12 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import '../../constants/app_constants.dart';
 import '../../models/batch.dart';
-import '../../models/task.dart';
 import '../../models/submission.dart';
+import '../../models/task.dart';
 import '../../providers/user_provider.dart';
 import '../../services/firestore_service.dart';
 import '../../utils/helpers.dart';
@@ -12,10 +15,7 @@ import 'task_submission_screen.dart';
 class BatchTasksScreen extends StatefulWidget {
   final Batch batch;
 
-  const BatchTasksScreen({
-    super.key,
-    required this.batch,
-  });
+  const BatchTasksScreen({super.key, required this.batch});
 
   @override
   State<BatchTasksScreen> createState() => _BatchTasksScreenState();
@@ -39,7 +39,7 @@ class _BatchTasksScreenState extends State<BatchTasksScreen> {
     try {
       final tasksStream = _firestoreService.getTasksByBatch(widget.batch.id);
       final tasks = await tasksStream.first;
-      
+
       setState(() {
         _tasks = tasks;
         _isLoading = false;
@@ -56,14 +56,16 @@ class _BatchTasksScreenState extends State<BatchTasksScreen> {
     try {
       final userProvider = Provider.of<UserProvider>(context, listen: false);
       if (userProvider.currentUser != null) {
-        final submissionsStream = _firestoreService.getSubmissionsByStudent(userProvider.currentUser!.id);
+        final submissionsStream = _firestoreService.getSubmissionsByStudent(
+          userProvider.currentUser!.id,
+        );
         final submissions = await submissionsStream.first;
-        
+
         Map<String, Submission> submissionMap = {};
         for (var submission in submissions) {
           submissionMap[submission.taskId] = submission;
         }
-        
+
         setState(() {
           _submissions = submissionMap;
         });
@@ -89,8 +91,8 @@ class _BatchTasksScreenState extends State<BatchTasksScreen> {
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _error != null
-                ? _buildErrorState()
-                : _buildContent(),
+            ? _buildErrorState()
+            : _buildContent(),
       ),
     );
   }
@@ -110,9 +112,9 @@ class _BatchTasksScreenState extends State<BatchTasksScreen> {
             const SizedBox(height: AppConstants.defaultPadding),
             Text(
               'Error Loading Tasks',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: AppConstants.smallPadding),
             Text(
@@ -123,10 +125,7 @@ class _BatchTasksScreenState extends State<BatchTasksScreen> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppConstants.defaultPadding),
-            ElevatedButton(
-              onPressed: _loadTasks,
-              child: const Text('Retry'),
-            ),
+            ElevatedButton(onPressed: _loadTasks, child: const Text('Retry')),
           ],
         ),
       ),
@@ -142,7 +141,7 @@ class _BatchTasksScreenState extends State<BatchTasksScreen> {
           // Batch Info Card
           _buildBatchInfoCard(),
           const SizedBox(height: AppConstants.largePadding),
-          
+
           // Tasks List
           _buildTasksList(),
         ],
@@ -216,9 +215,9 @@ class _BatchTasksScreenState extends State<BatchTasksScreen> {
             const SizedBox(width: AppConstants.smallPadding),
             Text(
               'Tasks (${_tasks.length})',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -238,7 +237,9 @@ class _BatchTasksScreenState extends State<BatchTasksScreen> {
       margin: const EdgeInsets.only(bottom: AppConstants.smallPadding),
       child: InkWell(
         borderRadius: BorderRadius.circular(AppConstants.borderRadius),
-        onTap: task.type == TaskType.announcement || isSubmitted ? null : () => _viewTaskDetails(task),
+        onTap: task.type == TaskType.announcement || isSubmitted
+            ? null
+            : () => _viewTaskDetails(task),
         child: Padding(
           padding: const EdgeInsets.all(AppConstants.defaultPadding),
           child: Column(
@@ -261,16 +262,16 @@ class _BatchTasksScreenState extends State<BatchTasksScreen> {
                     ),
                   ),
                   Row(
-                  children: [
-                    _buildSubmissionStatusChip(task),
-                    const SizedBox(width: AppConstants.smallPadding),
-                    _buildTaskStatusChip(task.status),
-                  ],
-                ),
+                    children: [
+                      _buildSubmissionStatusChip(task),
+                      const SizedBox(width: AppConstants.smallPadding),
+                      _buildTaskStatusChip(task.status),
+                    ],
+                  ),
                 ],
               ),
               const SizedBox(height: AppConstants.smallPadding),
-              Text(
+              _buildLinkifiedText(
                 task.description,
                 style: Theme.of(context).textTheme.bodyMedium,
                 maxLines: 2,
@@ -284,7 +285,7 @@ class _BatchTasksScreenState extends State<BatchTasksScreen> {
                   children: [
                     _buildInfoChip(
                       Icons.schedule,
-                      task.dueDate != null 
+                      task.dueDate != null
                           ? 'Due: ${Helpers.formatDate(task.dueDate!)}'
                           : 'No due date',
                       task.isOverdue ? Colors.red : Colors.orange,
@@ -295,11 +296,7 @@ class _BatchTasksScreenState extends State<BatchTasksScreen> {
                       Colors.blue,
                     ),
                     if (task.isDueSoon)
-                      _buildInfoChip(
-                        Icons.warning,
-                        'Due Soon',
-                        Colors.red,
-                      ),
+                      _buildInfoChip(Icons.warning, 'Due Soon', Colors.red),
                   ],
                 ),
             ],
@@ -309,9 +306,57 @@ class _BatchTasksScreenState extends State<BatchTasksScreen> {
     );
   }
 
+  // Renders text with clickable links
+  Widget _buildLinkifiedText(
+    String text, {
+    TextStyle? style,
+    int? maxLines,
+    TextOverflow? overflow,
+  }) {
+    final urlRegex = RegExp(r'(https?:\/\/[^\s]+)');
+    final spans = <TextSpan>[];
+    int start = 0;
+
+    for (final match in urlRegex.allMatches(text)) {
+      if (match.start > start) {
+        spans.add(
+          TextSpan(text: text.substring(start, match.start), style: style),
+        );
+      }
+      final url = text.substring(match.start, match.end);
+      spans.add(
+        TextSpan(
+          text: url,
+          style: (style ?? const TextStyle()).copyWith(
+            color: Theme.of(context).colorScheme.primary,
+            decoration: TextDecoration.underline,
+          ),
+          recognizer: (TapGestureRecognizer()
+            ..onTap = () async {
+              try {
+                final uri = Uri.parse(url);
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
+              } catch (_) {}
+            }),
+        ),
+      );
+      start = match.end;
+    }
+
+    if (start < text.length) {
+      spans.add(TextSpan(text: text.substring(start), style: style));
+    }
+
+    return RichText(
+      maxLines: maxLines,
+      overflow: overflow ?? TextOverflow.clip,
+      text: TextSpan(children: spans, style: style),
+    );
+  }
+
   Widget _buildSubmissionStatusChip(Task task) {
     final submission = _submissions[task.id];
-    
+
     if (submission == null) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -329,11 +374,11 @@ class _BatchTasksScreenState extends State<BatchTasksScreen> {
         ),
       );
     }
-    
+
     Color color;
     String text;
     IconData icon;
-    
+
     switch (submission.status) {
       case SubmissionStatus.draft:
         color = Colors.orange;
@@ -351,7 +396,7 @@ class _BatchTasksScreenState extends State<BatchTasksScreen> {
         icon = Icons.grade;
         break;
     }
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -379,7 +424,7 @@ class _BatchTasksScreenState extends State<BatchTasksScreen> {
   Widget _buildTaskStatusChip(TaskStatus status) {
     Color color;
     String text;
-    
+
     switch (status) {
       case TaskStatus.draft:
         color = Colors.grey;
@@ -394,7 +439,7 @@ class _BatchTasksScreenState extends State<BatchTasksScreen> {
         text = 'Closed';
         break;
     }
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -502,17 +547,19 @@ class _BatchTasksScreenState extends State<BatchTasksScreen> {
     if (task.type == TaskType.announcement) {
       return;
     }
-    
+
     // Navigate to task submission screen for other task types
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => TaskSubmissionScreen(task: task),
-      ),
-    ).then((submitted) {
-      // Refresh submissions if task was submitted
-      if (submitted == true) {
-        _loadSubmissions();
-      }
-    });
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute(
+            builder: (context) => TaskSubmissionScreen(task: task),
+          ),
+        )
+        .then((submitted) {
+          // Refresh submissions if task was submitted
+          if (submitted == true) {
+            _loadSubmissions();
+          }
+        });
   }
 }

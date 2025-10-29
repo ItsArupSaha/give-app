@@ -1,15 +1,19 @@
-import 'package:flutter/material.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'dart:io';
+
+import 'package:audioplayers/audioplayers.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:record/record.dart';
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
-import 'package:audioplayers/audioplayers.dart';
-import 'package:path/path.dart' as p;
+import 'package:url_launcher/url_launcher.dart';
+
 import '../../constants/app_constants.dart';
-import '../../models/task.dart';
 import '../../models/submission.dart';
+import '../../models/task.dart';
 import '../../providers/user_provider.dart';
 import '../../services/firestore_service.dart';
 import '../../utils/helpers.dart';
@@ -17,10 +21,7 @@ import '../../utils/helpers.dart';
 class TaskSubmissionScreen extends StatefulWidget {
   final Task task;
 
-  const TaskSubmissionScreen({
-    super.key,
-    required this.task,
-  });
+  const TaskSubmissionScreen({super.key, required this.task});
 
   @override
   State<TaskSubmissionScreen> createState() => _TaskSubmissionScreenState();
@@ -81,14 +82,14 @@ class _TaskSubmissionScreenState extends State<TaskSubmissionScreen> {
             // Task Info Card
             _buildTaskInfoCard(),
             const SizedBox(height: AppConstants.largePadding),
-            
+
             // Submission Options
             AbsorbPointer(
               absorbing: _alreadySubmitted,
               child: _buildSubmissionOptions(),
             ),
             const SizedBox(height: AppConstants.largePadding),
-            
+
             // Notes Section
             _buildNotesSection(),
           ],
@@ -124,7 +125,7 @@ class _TaskSubmissionScreenState extends State<TaskSubmissionScreen> {
               ],
             ),
             const SizedBox(height: AppConstants.defaultPadding),
-            Text(
+            _buildLinkifiedText(
               widget.task.description,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
@@ -154,7 +155,9 @@ class _TaskSubmissionScreenState extends State<TaskSubmissionScreen> {
                 padding: const EdgeInsets.all(AppConstants.smallPadding),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(AppConstants.smallBorderRadius),
+                  borderRadius: BorderRadius.circular(
+                    AppConstants.smallBorderRadius,
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -166,7 +169,7 @@ class _TaskSubmissionScreenState extends State<TaskSubmissionScreen> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
+                    _buildLinkifiedText(
                       widget.task.instructions!,
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
@@ -180,6 +183,54 @@ class _TaskSubmissionScreenState extends State<TaskSubmissionScreen> {
     );
   }
 
+  // Renders text with clickable links
+  Widget _buildLinkifiedText(
+    String text, {
+    TextStyle? style,
+    int? maxLines,
+    TextOverflow? overflow,
+  }) {
+    final urlRegex = RegExp(r'(https?:\/\/[^\s]+)');
+    final spans = <TextSpan>[];
+    int start = 0;
+
+    for (final match in urlRegex.allMatches(text)) {
+      if (match.start > start) {
+        spans.add(
+          TextSpan(text: text.substring(start, match.start), style: style),
+        );
+      }
+      final url = text.substring(match.start, match.end);
+      spans.add(
+        TextSpan(
+          text: url,
+          style: (style ?? const TextStyle()).copyWith(
+            color: Theme.of(context).colorScheme.primary,
+            decoration: TextDecoration.underline,
+          ),
+          recognizer: (TapGestureRecognizer()
+            ..onTap = () async {
+              try {
+                final uri = Uri.parse(url);
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
+              } catch (_) {}
+            }),
+        ),
+      );
+      start = match.end;
+    }
+
+    if (start < text.length) {
+      spans.add(TextSpan(text: text.substring(start), style: style));
+    }
+
+    return RichText(
+      maxLines: maxLines,
+      overflow: overflow ?? TextOverflow.clip,
+      text: TextSpan(children: spans, style: style),
+    );
+  }
+
   Widget _buildSubmissionOptions() {
     return Card(
       child: Padding(
@@ -189,18 +240,18 @@ class _TaskSubmissionScreenState extends State<TaskSubmissionScreen> {
           children: [
             Text(
               'Submission Options',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: AppConstants.defaultPadding),
-            
+
             // Voice Recording (only for Daily Listening)
             if (widget.task.type == TaskType.dailyListening) ...[
               _buildVoiceRecordingSection(),
               const SizedBox(height: AppConstants.defaultPadding),
             ],
-            
+
             // File Upload Section
             _buildFileUploadSection(),
           ],
@@ -215,9 +266,9 @@ class _TaskSubmissionScreenState extends State<TaskSubmissionScreen> {
       children: [
         Text(
           'Voice Recording',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: AppConstants.smallPadding),
         Container(
@@ -235,16 +286,18 @@ class _TaskSubmissionScreenState extends State<TaskSubmissionScreen> {
                 children: [
                   Icon(
                     Icons.mic,
-                    color: _isRecording ? Colors.red : Theme.of(context).colorScheme.primary,
+                    color: _isRecording
+                        ? Colors.red
+                        : Theme.of(context).colorScheme.primary,
                   ),
                   const SizedBox(width: AppConstants.smallPadding),
                   Expanded(
                     child: Text(
-                      _isRecording 
+                      _isRecording
                           ? 'Recording... Tap to stop'
-                          : _hasRecording 
-                              ? 'Recording completed'
-                              : 'Tap to start recording',
+                          : _hasRecording
+                          ? 'Recording completed'
+                          : 'Tap to start recording',
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ),
@@ -260,7 +313,9 @@ class _TaskSubmissionScreenState extends State<TaskSubmissionScreen> {
                         icon: const Icon(Icons.mic),
                         label: const Text('Start Recording'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.primary,
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.primary,
                           foregroundColor: Colors.white,
                         ),
                       ),
@@ -342,9 +397,9 @@ class _TaskSubmissionScreenState extends State<TaskSubmissionScreen> {
       children: [
         Text(
           'File Upload',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: AppConstants.smallPadding),
         Text(
@@ -390,9 +445,9 @@ class _TaskSubmissionScreenState extends State<TaskSubmissionScreen> {
           children: [
             Text(
               'Additional Notes (Optional)',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: AppConstants.smallPadding),
             TextField(
@@ -412,7 +467,7 @@ class _TaskSubmissionScreenState extends State<TaskSubmissionScreen> {
   Widget _buildTaskStatusChip(TaskStatus status) {
     Color color;
     String text;
-    
+
     switch (status) {
       case TaskStatus.draft:
         color = Colors.grey;
@@ -427,7 +482,7 @@ class _TaskSubmissionScreenState extends State<TaskSubmissionScreen> {
         text = 'Closed';
         break;
     }
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -674,10 +729,14 @@ class _TaskSubmissionScreenState extends State<TaskSubmissionScreen> {
     }
     // For Daily Listening, no validation needed - just mark as submitted for the date
     if (widget.task.type != TaskType.dailyListening) {
-      if (!_hasRecording && _uploadedFiles.isEmpty && _notesController.text.trim().isEmpty) {
+      if (!_hasRecording &&
+          _uploadedFiles.isEmpty &&
+          _notesController.text.trim().isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Please add at least one submission (recording, file, or notes)'),
+            content: Text(
+              'Please add at least one submission (recording, file, or notes)',
+            ),
             backgroundColor: Colors.orange,
           ),
         );
@@ -687,22 +746,23 @@ class _TaskSubmissionScreenState extends State<TaskSubmissionScreen> {
 
     // Check for late submission for Daily Listening
     if (widget.task.type == TaskType.dailyListening) {
-      final today = DateTime.now();
-      final taskDate = DateTime(today.year, today.month, today.day);
+      // current date used for due date comparison
       final now = DateTime.now();
       final currentDate = DateTime(now.year, now.month, now.day);
-      
+
       if (widget.task.dueDate != null) {
         final dueDate = DateTime(
           widget.task.dueDate!.year,
           widget.task.dueDate!.month,
           widget.task.dueDate!.day,
         );
-        
+
         if (currentDate.isAfter(dueDate)) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Daily Listening cannot be submitted after the due date'),
+              content: Text(
+                'Daily Listening cannot be submitted after the due date',
+              ),
               backgroundColor: Colors.red,
             ),
           );
@@ -728,9 +788,17 @@ class _TaskSubmissionScreenState extends State<TaskSubmissionScreen> {
         createdAt: now,
         updatedAt: now,
         submittedAt: now,
-        fileUrls: widget.task.type == TaskType.dailyListening ? [] : _uploadedFiles,
-        recordingUrl: widget.task.type == TaskType.dailyListening ? null : _recordingPath,
-        notes: widget.task.type == TaskType.dailyListening ? null : (_notesController.text.trim().isEmpty ? null : _notesController.text.trim()),
+        fileUrls: widget.task.type == TaskType.dailyListening
+            ? []
+            : _uploadedFiles,
+        recordingUrl: widget.task.type == TaskType.dailyListening
+            ? null
+            : _recordingPath,
+        notes: widget.task.type == TaskType.dailyListening
+            ? null
+            : (_notesController.text.trim().isEmpty
+                  ? null
+                  : _notesController.text.trim()),
       );
 
       await _firestoreService.createSubmission(submission);
@@ -752,9 +820,11 @@ class _TaskSubmissionScreenState extends State<TaskSubmissionScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(widget.task.type == TaskType.dailyListening 
-                ? 'Daily Listening marked as completed for today!'
-                : 'Task submitted successfully!'),
+            content: Text(
+              widget.task.type == TaskType.dailyListening
+                  ? 'Daily Listening marked as completed for today!'
+                  : 'Task submitted successfully!',
+            ),
             backgroundColor: Colors.green,
           ),
         );
