@@ -40,15 +40,6 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
     }
   }
 
-  Future<void> _refreshStats() async {
-    final statsProvider = Provider.of<StatsProvider>(context, listen: false);
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-
-    if (userProvider.currentUser != null) {
-      await statsProvider.refreshStats(userProvider.currentUser!.id);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -283,26 +274,23 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
           ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: AppConstants.smallPadding),
-        Row(
-          children: [
-            Expanded(
-              child: _buildActionCard(
-                'Create Course Group',
-                'Start a new course group',
-                Icons.create_new_folder,
-                () => _navigateToCreateCourseGroup(),
-              ),
-            ),
-            const SizedBox(width: AppConstants.smallPadding),
-            Expanded(
-              child: _buildActionCard(
-                'Manage Batches',
-                'View all batches',
-                Icons.class_,
-                () => _navigateToBatchManagement(),
-              ),
-            ),
-          ],
+        Container(
+          margin: const EdgeInsets.only(bottom: AppConstants.smallPadding),
+          child: _buildActionCard(
+            'Create Course Group',
+            'Start a new course group',
+            Icons.create_new_folder,
+            () => _navigateToCreateCourseGroup(),
+          ),
+        ),
+        Container(
+          margin: const EdgeInsets.only(bottom: AppConstants.smallPadding),
+          child: _buildActionCard(
+            'Manage Batches',
+            'View all batches',
+            Icons.class_,
+            () => _navigateToBatchManagement(),
+          ),
         ),
       ],
     );
@@ -506,15 +494,6 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
   void _navigateToBatchManagement() {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (context) => const BatchManagementScreen()),
-    );
-  }
-
-  void _showComingSoon(String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$feature coming soon!'),
-        backgroundColor: const Color(AppColors.primaryColorValue),
-      ),
     );
   }
 
