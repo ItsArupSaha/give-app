@@ -27,6 +27,7 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
   List<Task> _tasks = [];
   bool _isLoading = true;
   String? _error;
+  TaskType? _selectedTaskType; // null means "All"
 
   @override
   void initState() {
@@ -716,6 +717,10 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
   }
 
   Widget _buildTasksSection() {
+    final visibleTasks = _selectedTaskType == null
+        ? _tasks
+        : _tasks.where((t) => t.type == _selectedTaskType).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -727,19 +732,62 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
             ),
             const SizedBox(width: AppConstants.smallPadding),
             Text(
-              'Tasks (${_tasks.length})',
+              'Tasks (${visibleTasks.length})',
               style: Theme.of(
                 context,
               ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
           ],
         ),
+        const SizedBox(height: AppConstants.smallPadding),
+        _buildTaskTypeFilter(),
         const SizedBox(height: AppConstants.defaultPadding),
-        if (_tasks.isEmpty)
+        if (visibleTasks.isEmpty)
           _buildEmptyState('No tasks created yet')
         else
-          ..._tasks.map((task) => _buildTaskCard(task)),
+          ...visibleTasks.map((task) => _buildTaskCard(task)),
       ],
+    );
+  }
+
+  Widget _buildTaskTypeFilter() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          _buildTypeChip(null, 'All'),
+          const SizedBox(width: 8),
+          _buildTypeChip(TaskType.dailyListening, 'Daily listening'),
+          const SizedBox(width: 8),
+          _buildTypeChip(TaskType.cba, 'CBA'),
+          const SizedBox(width: 8),
+          _buildTypeChip(TaskType.oba, 'OBA'),
+          const SizedBox(width: 8),
+          _buildTypeChip(TaskType.slokaMemorization, 'Sloka Memorization'),
+          const SizedBox(width: 8),
+          _buildTypeChip(TaskType.announcement, 'Announcements'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTypeChip(TaskType? type, String label) {
+    final bool selected = _selectedTaskType == type;
+    return ChoiceChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: (v) {
+        setState(() {
+          _selectedTaskType = v ? type : null;
+        });
+      },
+      selectedColor: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+      labelStyle: TextStyle(
+        color: selected
+            ? Theme.of(context).colorScheme.primary
+            : Theme.of(context).colorScheme.onSurface,
+        fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+      ),
     );
   }
 
