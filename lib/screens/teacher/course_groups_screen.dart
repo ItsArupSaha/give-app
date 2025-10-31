@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../providers/user_provider.dart';
-import '../../providers/course_group_provider.dart';
+
 import '../../constants/app_constants.dart';
+import '../../providers/course_group_provider.dart';
+import '../../providers/user_provider.dart';
 import '../../utils/helpers.dart';
+import 'batch_management_screen.dart';
 import 'create_course_group_screen.dart';
 
 class CourseGroupsScreen extends StatefulWidget {
@@ -24,8 +26,11 @@ class _CourseGroupsScreenState extends State<CourseGroupsScreen> {
 
   void _loadCourseGroups() {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final courseGroupProvider = Provider.of<CourseGroupProvider>(context, listen: false);
-    
+    final courseGroupProvider = Provider.of<CourseGroupProvider>(
+      context,
+      listen: false,
+    );
+
     if (userProvider.currentUser != null) {
       courseGroupProvider.loadCourseGroups(userProvider.currentUser!.id);
     }
@@ -46,9 +51,7 @@ class _CourseGroupsScreenState extends State<CourseGroupsScreen> {
       body: Consumer<CourseGroupProvider>(
         builder: (context, courseGroupProvider, child) {
           if (courseGroupProvider.isLoading) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (courseGroupProvider.error != null) {
@@ -133,9 +136,9 @@ class _CourseGroupsScreenState extends State<CourseGroupsScreen> {
             const SizedBox(height: AppConstants.largePadding),
             Text(
               'No Course Groups Yet',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: AppConstants.smallPadding),
             Text(
@@ -170,7 +173,13 @@ class _CourseGroupsScreenState extends State<CourseGroupsScreen> {
       child: InkWell(
         borderRadius: BorderRadius.circular(AppConstants.borderRadius),
         onTap: () {
-          // TODO: Navigate to course group details
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  BatchManagementScreen(initialCourseGroupId: courseGroup.id),
+            ),
+          );
         },
         child: Padding(
           padding: const EdgeInsets.all(AppConstants.defaultPadding),
@@ -198,15 +207,17 @@ class _CourseGroupsScreenState extends State<CourseGroupsScreen> {
                       children: [
                         Text(
                           courseGroup.name,
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         Text(
                           Helpers.formatDate(courseGroup.createdAt),
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
                         ),
                       ],
                     ),
@@ -232,7 +243,10 @@ class _CourseGroupsScreenState extends State<CourseGroupsScreen> {
                         value: 'delete',
                         child: ListTile(
                           leading: Icon(Icons.delete, color: Colors.red),
-                          title: Text('Delete', style: TextStyle(color: Colors.red)),
+                          title: Text(
+                            'Delete',
+                            style: TextStyle(color: Colors.red),
+                          ),
                           contentPadding: EdgeInsets.zero,
                         ),
                       ),
@@ -314,7 +328,10 @@ class _CourseGroupsScreenState extends State<CourseGroupsScreen> {
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
-              final courseGroupProvider = Provider.of<CourseGroupProvider>(context, listen: false);
+              final courseGroupProvider = Provider.of<CourseGroupProvider>(
+                context,
+                listen: false,
+              );
               await courseGroupProvider.deleteCourseGroup(courseGroup.id);
             },
             child: const Text(

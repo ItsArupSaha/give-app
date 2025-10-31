@@ -466,10 +466,6 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                         ],
                       ),
                     ),
-                    IconButton(
-                      onPressed: () => _navigateToCourseGroups(),
-                      icon: const Icon(Icons.arrow_forward_ios),
-                    ),
                   ],
                 ),
               );

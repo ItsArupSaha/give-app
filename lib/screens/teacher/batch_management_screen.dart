@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../../providers/user_provider.dart';
-import '../../providers/course_group_provider.dart';
-import '../../providers/batch_provider.dart';
+
 import '../../constants/app_constants.dart';
-import '../../utils/helpers.dart';
 import '../../models/batch.dart';
 import '../../models/course_group.dart';
+import '../../providers/course_group_provider.dart';
+import '../../providers/user_provider.dart';
 import '../../services/firestore_service.dart';
-import 'create_batch_screen.dart';
+import '../../utils/helpers.dart';
 import 'batch_details_screen.dart';
+import 'create_batch_screen.dart';
 
 class BatchManagementScreen extends StatefulWidget {
-  const BatchManagementScreen({super.key});
+  final String? initialCourseGroupId;
+
+  const BatchManagementScreen({super.key, this.initialCourseGroupId});
 
   @override
   State<BatchManagementScreen> createState() => _BatchManagementScreenState();
@@ -27,6 +29,7 @@ class _BatchManagementScreenState extends State<BatchManagementScreen> {
   @override
   void initState() {
     super.initState();
+    _selectedCourseGroupId = widget.initialCourseGroupId;
     _loadData();
   }
 
@@ -36,11 +39,14 @@ class _BatchManagementScreenState extends State<BatchManagementScreen> {
     });
 
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final courseGroupProvider = Provider.of<CourseGroupProvider>(context, listen: false);
-    
+    final courseGroupProvider = Provider.of<CourseGroupProvider>(
+      context,
+      listen: false,
+    );
+
     if (userProvider.currentUser != null) {
       await courseGroupProvider.loadCourseGroups(userProvider.currentUser!.id);
-      
+
       // Load batches for all course groups
       await _loadAllBatches();
     }
@@ -51,14 +57,19 @@ class _BatchManagementScreenState extends State<BatchManagementScreen> {
   }
 
   Future<void> _loadAllBatches() async {
-    final courseGroupProvider = Provider.of<CourseGroupProvider>(context, listen: false);
+    final courseGroupProvider = Provider.of<CourseGroupProvider>(
+      context,
+      listen: false,
+    );
     final firestoreService = FirestoreService();
-    
+
     _allBatches.clear();
-    
+
     for (final courseGroup in courseGroupProvider.courseGroups) {
       try {
-        final batches = await firestoreService.getBatchesByCourseGroup(courseGroup.id).first;
+        final batches = await firestoreService
+            .getBatchesByCourseGroup(courseGroup.id)
+            .first;
         _allBatches.addAll(batches);
       } catch (e) {
         print('Error loading batches for course group ${courseGroup.id}: $e');
@@ -69,17 +80,13 @@ class _BatchManagementScreenState extends State<BatchManagementScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Batch Management'),
-      ),
+      appBar: AppBar(title: const Text('Batch Management')),
       body: RefreshIndicator(
         onRefresh: _loadData,
         child: Consumer<CourseGroupProvider>(
           builder: (context, courseGroupProvider, child) {
             if (_isLoading) {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
+              return const Center(child: CircularProgressIndicator());
             }
 
             if (courseGroupProvider.courseGroups.isEmpty) {
@@ -90,18 +97,18 @@ class _BatchManagementScreenState extends State<BatchManagementScreen> {
               children: [
                 // Course Group Filter
                 _buildCourseGroupFilter(courseGroupProvider.courseGroups),
-                
+
                 // Batches List
-                Expanded(
-                  child: _buildBatchesList(),
-                ),
+                Expanded(child: _buildBatchesList()),
               ],
             );
           },
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _selectedCourseGroupId != null ? _showCreateBatchDialog : null,
+        onPressed: _selectedCourseGroupId != null
+            ? _showCreateBatchDialog
+            : null,
         icon: const Icon(Icons.add),
         label: const Text('Create Batch'),
       ),
@@ -123,9 +130,9 @@ class _BatchManagementScreenState extends State<BatchManagementScreen> {
             const SizedBox(height: AppConstants.largePadding),
             Text(
               'No Course Groups Found',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: AppConstants.smallPadding),
             Text(
@@ -149,9 +156,9 @@ class _BatchManagementScreenState extends State<BatchManagementScreen> {
         children: [
           Text(
             'Filter by Course Group',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: AppConstants.smallPadding),
           DropdownButtonFormField<String?>(
@@ -186,7 +193,9 @@ class _BatchManagementScreenState extends State<BatchManagementScreen> {
   Widget _buildBatchesList() {
     final filteredBatches = _selectedCourseGroupId == null
         ? _allBatches
-        : _allBatches.where((batch) => batch.courseGroupId == _selectedCourseGroupId).toList();
+        : _allBatches
+              .where((batch) => batch.courseGroupId == _selectedCourseGroupId)
+              .toList();
 
     if (filteredBatches.isEmpty) {
       return Center(
@@ -203,9 +212,9 @@ class _BatchManagementScreenState extends State<BatchManagementScreen> {
               _selectedCourseGroupId == null
                   ? 'No Batches Found'
                   : 'No Batches in Selected Course Group',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: AppConstants.smallPadding),
             Text(
@@ -268,17 +277,19 @@ class _BatchManagementScreenState extends State<BatchManagementScreen> {
                       children: [
                         Text(
                           batch.name,
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         Row(
                           children: [
                             Text(
                               'Class Code: ${batch.classCode}',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              ),
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
+                                  ),
                             ),
                             const SizedBox(width: 4),
                             GestureDetector(
@@ -325,7 +336,10 @@ class _BatchManagementScreenState extends State<BatchManagementScreen> {
                         value: 'delete',
                         child: ListTile(
                           leading: Icon(Icons.delete, color: Colors.red),
-                          title: Text('Delete', style: TextStyle(color: Colors.red)),
+                          title: Text(
+                            'Delete',
+                            style: TextStyle(color: Colors.red),
+                          ),
                           contentPadding: EdgeInsets.zero,
                         ),
                       ),
@@ -403,20 +417,25 @@ class _BatchManagementScreenState extends State<BatchManagementScreen> {
     }
 
     // Find the selected course group
-    final courseGroupProvider = Provider.of<CourseGroupProvider>(context, listen: false);
-    final selectedCourseGroup = courseGroupProvider.courseGroups
-        .firstWhere((cg) => cg.id == _selectedCourseGroupId);
+    final courseGroupProvider = Provider.of<CourseGroupProvider>(
+      context,
+      listen: false,
+    );
+    final selectedCourseGroup = courseGroupProvider.courseGroups.firstWhere(
+      (cg) => cg.id == _selectedCourseGroupId,
+    );
 
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => CreateBatchScreen(
-          courseGroup: selectedCourseGroup,
-        ),
-      ),
-    ).then((_) {
-      // Refresh data when returning from create batch screen
-      _loadData();
-    });
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute(
+            builder: (context) =>
+                CreateBatchScreen(courseGroup: selectedCourseGroup),
+          ),
+        )
+        .then((_) {
+          // Refresh data when returning from create batch screen
+          _loadData();
+        });
   }
 
   void _showDeleteDialog(Batch batch) {
@@ -466,7 +485,9 @@ class _BatchManagementScreenState extends State<BatchManagementScreen> {
 
   void _showEditBatchDialog(Batch batch) {
     final nameController = TextEditingController(text: batch.name);
-    final descriptionController = TextEditingController(text: batch.description);
+    final descriptionController = TextEditingController(
+      text: batch.description,
+    );
     DateTime selectedDate = batch.startDate ?? DateTime.now();
 
     showDialog(
@@ -496,7 +517,9 @@ class _BatchManagementScreenState extends State<BatchManagementScreen> {
                 ),
                 const SizedBox(height: 16),
                 ListTile(
-                  title: Text('Start Date: ${Helpers.formatDate(selectedDate)}'),
+                  title: Text(
+                    'Start Date: ${Helpers.formatDate(selectedDate)}',
+                  ),
                   trailing: const Icon(Icons.calendar_today),
                   onTap: () async {
                     final date = await showDatePicker(
@@ -531,10 +554,14 @@ class _BatchManagementScreenState extends State<BatchManagementScreen> {
                   );
                   return;
                 }
-                
+
                 Navigator.pop(context);
-                await _updateBatch(batch, nameController.text.trim(), 
-                    descriptionController.text.trim(), selectedDate);
+                await _updateBatch(
+                  batch,
+                  nameController.text.trim(),
+                  descriptionController.text.trim(),
+                  selectedDate,
+                );
               },
               child: const Text('Update'),
             ),
@@ -544,7 +571,12 @@ class _BatchManagementScreenState extends State<BatchManagementScreen> {
     );
   }
 
-  Future<void> _updateBatch(Batch batch, String name, String description, DateTime startDate) async {
+  Future<void> _updateBatch(
+    Batch batch,
+    String name,
+    String description,
+    DateTime startDate,
+  ) async {
     try {
       setState(() {
         _isLoading = true;
