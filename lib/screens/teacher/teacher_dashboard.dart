@@ -265,7 +265,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
 
   Widget _buildQuickActions() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
           'Quick Actions',
@@ -306,6 +306,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppConstants.borderRadius),
       child: Container(
+        width: double.infinity,
         padding: const EdgeInsets.all(AppConstants.defaultPadding),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
