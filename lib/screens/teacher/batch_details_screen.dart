@@ -99,23 +99,33 @@ class _BatchDetailsScreenState extends State<BatchDetailsScreen> {
             ? _buildErrorState()
             : _buildContent(),
       ),
-      floatingActionButton: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          FloatingActionButton(
-            onPressed: () => _showSubmissionReport(),
-            heroTag: "report",
-            child: const Icon(Icons.analytics),
-            tooltip: 'Submission Report',
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AppConstants.defaultPadding),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(
+                height: 48,
+                child: OutlinedButton.icon(
+                  onPressed: () => _showSubmissionReport(),
+                  icon: const Icon(Icons.analytics),
+                  label: const Text('Daily Listening Analytics'),
+                ),
+              ),
+              const SizedBox(height: AppConstants.smallPadding),
+              SizedBox(
+                height: 48,
+                child: ElevatedButton.icon(
+                  onPressed: () => _navigateToCreateTask(),
+                  icon: const Icon(Icons.assignment),
+                  label: const Text('Create Task'),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          FloatingActionButton.extended(
-            onPressed: () => _navigateToCreateTask(),
-            icon: const Icon(Icons.assignment),
-            label: const Text('Create Task'),
-            heroTag: "create",
-          ),
-        ],
+        ),
       ),
     );
   }
