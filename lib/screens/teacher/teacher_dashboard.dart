@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../constants/app_constants.dart';
-import '../../providers/user_provider.dart';
 import '../../providers/course_group_provider.dart';
 import '../../providers/stats_provider.dart';
+import '../../providers/user_provider.dart';
+import 'batch_management_screen.dart';
 import 'course_groups_screen.dart';
 import 'create_course_group_screen.dart';
-import 'batch_management_screen.dart';
 
 class TeacherDashboard extends StatefulWidget {
   const TeacherDashboard({super.key});
@@ -23,10 +24,13 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
   }
 
   Future<void> _loadData() async {
-    final courseGroupProvider = Provider.of<CourseGroupProvider>(context, listen: false);
+    final courseGroupProvider = Provider.of<CourseGroupProvider>(
+      context,
+      listen: false,
+    );
     final statsProvider = Provider.of<StatsProvider>(context, listen: false);
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    
+
     if (userProvider.currentUser != null) {
       // Load data in parallel for better performance
       await Future.wait([
@@ -39,7 +43,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
   Future<void> _refreshStats() async {
     final statsProvider = Provider.of<StatsProvider>(context, listen: false);
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    
+
     if (userProvider.currentUser != null) {
       await statsProvider.refreshStats(userProvider.currentUser!.id);
     }
@@ -70,27 +74,20 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
               // Welcome Section
               _buildWelcomeSection(),
               const SizedBox(height: AppConstants.defaultPadding),
-              
+
               // Quick Stats
               _buildQuickStats(),
               const SizedBox(height: AppConstants.defaultPadding),
-              
+
               // Quick Actions
               _buildQuickActions(),
               const SizedBox(height: AppConstants.defaultPadding),
-              
+
               // Course Groups Overview
               _buildCourseGroupsOverview(),
             ],
           ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _navigateToCreateCourseGroup(),
-        backgroundColor: const Color(AppColors.primaryColorValue),
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
-        label: const Text('New Course Group'),
       ),
     );
   }
@@ -134,16 +131,18 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                       children: [
                         Text(
                           'Welcome back!',
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
                         ),
                         Text(
                           user?.name ?? 'Teacher',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.9),
-                          ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
+                                color: Colors.white.withValues(alpha: 0.9),
+                              ),
                         ),
                       ],
                     ),
@@ -171,12 +170,10 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
         if (courseGroupProvider.isLoading || statsProvider.isLoading) {
           return Container(
             height: 120,
-            child: const Center(
-              child: CircularProgressIndicator(),
-            ),
+            child: const Center(child: CircularProgressIndicator()),
           );
         }
-        
+
         // Show error state if there's an error
         if (courseGroupProvider.error != null || statsProvider.error != null) {
           return Container(
@@ -202,7 +199,7 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
             ),
           );
         }
-        
+
         return Row(
           children: [
             Expanded(
@@ -237,7 +234,12 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(AppConstants.defaultPadding),
       decoration: BoxDecoration(
@@ -276,9 +278,9 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
       children: [
         Text(
           'Quick Actions',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: AppConstants.smallPadding),
         Row(
@@ -302,33 +304,16 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
             ),
           ],
         ),
-        const SizedBox(height: AppConstants.smallPadding),
-        Row(
-          children: [
-            Expanded(
-              child: _buildActionCard(
-                'Create Task',
-                'Assign new task',
-                Icons.assignment,
-                () => _showComingSoon('Task Creation'),
-              ),
-            ),
-            const SizedBox(width: AppConstants.smallPadding),
-            Expanded(
-              child: _buildActionCard(
-                'View Analytics',
-                'Student progress',
-                Icons.analytics,
-                () => _showComingSoon('Analytics'),
-              ),
-            ),
-          ],
-        ),
       ],
     );
   }
 
-  Widget _buildActionCard(String title, String subtitle, IconData icon, VoidCallback onTap) {
+  Widget _buildActionCard(
+    String title,
+    String subtitle,
+    IconData icon,
+    VoidCallback onTap,
+  ) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppConstants.borderRadius),
@@ -344,13 +329,17 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: const Color(AppColors.primaryColorValue), size: 28),
+            Icon(
+              icon,
+              color: const Color(AppColors.primaryColorValue),
+              size: 28,
+            ),
             const SizedBox(height: AppConstants.smallPadding),
             Text(
               title,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
             Text(
               subtitle,
@@ -364,7 +353,6 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
     );
   }
 
-
   Widget _buildCourseGroupsOverview() {
     return Consumer<CourseGroupProvider>(
       builder: (context, courseGroupProvider, child) {
@@ -376,7 +364,9 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
               color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(AppConstants.borderRadius),
               border: Border.all(
-                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                color: Theme.of(
+                  context,
+                ).colorScheme.outline.withValues(alpha: 0.2),
               ),
             ),
             child: Column(
@@ -389,9 +379,9 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                 const SizedBox(height: AppConstants.defaultPadding),
                 Text(
                   'No Course Groups Yet',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: AppConstants.smallPadding),
                 Text(
@@ -424,9 +414,9 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
               children: [
                 Text(
                   'Course Groups',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 TextButton(
                   onPressed: () => _navigateToCourseGroups(),
@@ -437,19 +427,27 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
             const SizedBox(height: AppConstants.smallPadding),
             ...courseGroupProvider.courseGroups.take(3).map((courseGroup) {
               return Container(
-                margin: const EdgeInsets.only(bottom: AppConstants.smallPadding),
+                margin: const EdgeInsets.only(
+                  bottom: AppConstants.smallPadding,
+                ),
                 padding: const EdgeInsets.all(AppConstants.defaultPadding),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+                  borderRadius: BorderRadius.circular(
+                    AppConstants.borderRadius,
+                  ),
                   border: Border.all(
-                    color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.outline.withValues(alpha: 0.2),
                   ),
                 ),
                 child: Row(
                   children: [
                     CircleAvatar(
-                      backgroundColor: const Color(AppColors.primaryColorValue).withValues(alpha: 0.1),
+                      backgroundColor: const Color(
+                        AppColors.primaryColorValue,
+                      ).withValues(alpha: 0.1),
                       child: const Icon(
                         Icons.folder,
                         color: Color(AppColors.primaryColorValue),
@@ -462,15 +460,17 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
                         children: [
                           Text(
                             courseGroup.name,
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w600),
                           ),
                           Text(
                             courseGroup.description,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -493,25 +493,19 @@ class _TeacherDashboardState extends State<TeacherDashboard> {
 
   void _navigateToCreateCourseGroup() {
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const CreateCourseGroupScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const CreateCourseGroupScreen()),
     );
   }
 
   void _navigateToCourseGroups() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const CourseGroupsScreen(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const CourseGroupsScreen()));
   }
 
   void _navigateToBatchManagement() {
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const BatchManagementScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const BatchManagementScreen()),
     );
   }
 

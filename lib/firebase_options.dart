@@ -2,7 +2,7 @@
 // ignore_for_file: type=lint
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
-    show defaultTargetPlatform, kIsWeb, TargetPlatform;
+    show defaultTargetPlatform, TargetPlatform;
 
 /// Default [FirebaseOptions] for use with your Firebase apps.
 ///
@@ -16,23 +16,11 @@ import 'package:flutter/foundation.dart'
 /// ```
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
-    if (kIsWeb) {
-      return web;
-    }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
         return ios;
-      case TargetPlatform.macOS:
-        return macos;
-      case TargetPlatform.windows:
-        return windows;
-      case TargetPlatform.linux:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for linux - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
       default:
         throw UnsupportedError(
           'DefaultFirebaseOptions are not supported for this platform.',
@@ -40,49 +28,20 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDLZif_zhmOkQMTo_7D3QyI41oG5A5nzW0',
-    appId: '1:1044465475449:web:5caa9ab054d0504abb59a8',
-    messagingSenderId: '1044465475449',
-    projectId: 'give-app-25119',
-    authDomain: 'give-app-25119.firebaseapp.com',
-    storageBucket: 'give-app-25119.firebasestorage.app',
-    measurementId: 'G-8GX4BBRW5H',
-  );
-
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyCER9Uf0qplFvC1ZjYUrol838OlH3nn7gw',
-    appId: '1:1044465475449:android:2a2bb8648f8efd9fbb59a8',
-    messagingSenderId: '1044465475449',
-    projectId: 'give-app-25119',
-    storageBucket: 'give-app-25119.firebasestorage.app',
+    apiKey: 'AIzaSyB6UIZQ-B-Qmwbepb2CYboFJb4Qp83L8q0',
+    appId: '1:1568008705:android:1caf4baba544ddad15ae00',
+    messagingSenderId: '1568008705',
+    projectId: 'give-app-d9a07',
+    storageBucket: 'give-app-d9a07.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyArHP23vKoC6Bwl-M80OFhmvyJPl4GzVR8',
-    appId: '1:1044465475449:ios:67744a8609192b16bb59a8',
-    messagingSenderId: '1044465475449',
-    projectId: 'give-app-25119',
-    storageBucket: 'give-app-25119.firebasestorage.app',
+    apiKey: 'AIzaSyBlrMy7rD7-2QJAHTjvLfBvAOV0VikUPH8',
+    appId: '1:1568008705:ios:465450f6f58fb97315ae00',
+    messagingSenderId: '1568008705',
+    projectId: 'give-app-d9a07',
+    storageBucket: 'give-app-d9a07.firebasestorage.app',
     iosBundleId: 'com.example.giveApp',
-  );
-
-  static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyArHP23vKoC6Bwl-M80OFhmvyJPl4GzVR8',
-    appId: '1:1044465475449:ios:67744a8609192b16bb59a8',
-    messagingSenderId: '1044465475449',
-    projectId: 'give-app-25119',
-    storageBucket: 'give-app-25119.firebasestorage.app',
-    iosBundleId: 'com.example.giveApp',
-  );
-
-  static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyDLZif_zhmOkQMTo_7D3QyI41oG5A5nzW0',
-    appId: '1:1044465475449:web:36818821d1161df0bb59a8',
-    messagingSenderId: '1044465475449',
-    projectId: 'give-app-25119',
-    authDomain: 'give-app-25119.firebaseapp.com',
-    storageBucket: 'give-app-25119.firebasestorage.app',
-    measurementId: 'G-0HZLZ76NDX',
   );
 }

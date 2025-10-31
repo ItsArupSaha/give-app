@@ -1,43 +1,26 @@
 {
   "project_info": {
-    "project_number": "1044465475449",
-    "project_id": "give-app-25119",
-    "storage_bucket": "give-app-25119.firebasestorage.app"
+    "project_number": "1568008705",
+    "project_id": "give-app-d9a07",
+    "storage_bucket": "give-app-d9a07.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1044465475449:android:2a2bb8648f8efd9fbb59a8",
+        "mobilesdk_app_id": "1:1568008705:android:1caf4baba544ddad15ae00",
         "android_client_info": {
           "package_name": "com.example.give_app"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "1044465475449-9gcstu75f423a90ahgkq11uim231ah25.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCER9Uf0qplFvC1ZjYUrol838OlH3nn7gw"
+          "current_key": "AIzaSyB6UIZQ-B-Qmwbepb2CYboFJb4Qp83L8q0"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "1044465475449-9gcstu75f423a90ahgkq11uim231ah25.apps.googleusercontent.com",
-              "client_type": 3
-            },
-            {
-              "client_id": "1044465475449-l8tjed86l3vmu1fntmcpgbukr4objfg9.apps.googleusercontent.com",
-              "client_type": 2,
-              "ios_info": {
-                "bundle_id": "com.example.giveApp"
-              }
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     }
